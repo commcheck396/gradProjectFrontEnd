@@ -1,16 +1,34 @@
 <script setup>
 import { User, Lock } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import {useRouter} from 'vue-router'
+import {useTokenStore} from '@/stores/token.js'
+
 const isRegister = ref(false)
 const tabPosition = ref('top')
 const activeName = ref('Login')
+const router = useRouter()
+const tokenStore = useTokenStore()
+
+
+onMounted(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            if (message) {
+                ElMessage.error(message);
+            }
+        });
+
+
 function handleTabClick(name) {
     if (name === 'Register') {
         isRegister.value = true
     } else {
         isRegister.value = false
     }
-    console.log(name)
+    // clear data
+    clear()
 }
 const userData = ref({
     username: '',
@@ -55,15 +73,21 @@ const rules = {
     rePassword: [{ validator: validatePass2, trigger: 'blur' }],
 }
 
-import { userRegisterService } from '@/api/user';
+import { userRegisterService, userLoginService } from '@/api/user';
 const register = async() => {
     let result = await userRegisterService(userData.value)
-    if (result.code === 0) {
-        // alert(result.msg)
-        alert(result.message)
-    } else {
-        alert('注册失败')
-    }
+    ElMessage.success(result.message)
+}
+const login = async() => {
+    let result = await userLoginService(userData.value)
+    ElMessage.success(result.message)
+    tokenStore.setToken(result.data)
+    router.push('/main')
+}
+const clear = () => {
+    userData.value.username = ''
+    userData.value.password = ''
+    userData.value.rePassword = ''
 }
 
 </script>
@@ -112,7 +136,7 @@ const register = async() => {
                     </el-form-item>
                     <!-- 登录按钮 -->
                     <el-form-item>
-                        <el-button class="button" type="primary" auto-insert-space>登录</el-button>
+                        <el-button class="button" type="primary" auto-insert-space @click="login">登录</el-button>
                     </el-form-item>
                 </el-form>
             </el-tabs>
