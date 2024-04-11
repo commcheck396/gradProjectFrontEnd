@@ -7,9 +7,68 @@ import {
     Crop,
     EditPen,
     SwitchButton,
-    CaretBottom
+    CaretBottom,
+    TrendCharts,
+    List,
+    Grid,
+    BellFilled,
+    HelpFilled,
+    RemoveFilled,
+    Tickets,
+    Monitor,
+    Help
 } from '@element-plus/icons-vue'
 import avatar from '@/assets/default.png'
+
+import { userInfoService } from '@/api/user.js'
+import useUserInfoStore from '@/stores/userInfo.js'
+const userInfoStore = useUserInfoStore();
+const getUserInfo = async () => {
+    let result = await userInfoService();
+    userInfoStore.setInfo(result.data);
+}
+getUserInfo()
+
+import { useRouter } from 'vue-router';
+const router = useRouter();
+
+import { ElMessageBox, ElMessage } from 'element-plus';
+import { useTokenStore } from '@/stores/token';
+const tokenStore = useTokenStore();
+
+
+const handleCommand = (command) => {
+    if (command === 'logout') {
+        ElMessageBox.confirm(
+            '确定要注销登录吗？',
+            '提示',
+            {
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                type: 'warning',
+            }
+        )
+            .then(() => {
+                ElMessage({
+                    type: 'success',
+                    message: '注销成功',
+                })
+                tokenStore.removeToken();
+                userInfoStore.removeInfo();
+                router.push('/login');
+            })
+            .catch(() => {
+                ElMessage({
+                    type: 'info',
+                    message: '取消注销操作',
+                })
+            })
+
+    } else {
+        router.push(`/user/${command}`);
+    }
+}
+
 </script>
 
 <template>
@@ -20,38 +79,38 @@ import avatar from '@/assets/default.png'
             <el-menu active-text-color="#ffd04b" background-color="#232323" text-color="#fff" router>
                 <el-menu-item index="/dashboard">
                     <el-icon>
-                        <Management />
+                        <TrendCharts />
                     </el-icon>
                     <span>Dashboard</span>
                 </el-menu-item>
                 <el-sub-menu index="group">
                     <template #title>
                         <el-icon>
-                            <UserFilled />
+                            <HelpFilled />
                         </el-icon>
                         <span>组</span>
                     </template>
                     <el-menu-item index="/group/all">
                         <el-icon>
-                            <User />
+                            <Help />
                         </el-icon>
                         <span>所有组</span>
                     </el-menu-item>
                     <el-menu-item index="/group/ijoined">
                         <el-icon>
-                            <Crop />
+                            <Help />
                         </el-icon>
                         <span>我加入的组</span>
                     </el-menu-item>
                     <el-menu-item index="/group/iadmin">
                         <el-icon>
-                            <EditPen />
+                            <Help />
                         </el-icon>
                         <span>我管理的组</span>
                     </el-menu-item>
                     <el-menu-item index="/group/iown">
                         <el-icon>
-                            <EditPen />
+                            <Help />
                         </el-icon>
                         <span>我创建的组</span>
                     </el-menu-item>
@@ -59,37 +118,37 @@ import avatar from '@/assets/default.png'
                 <el-sub-menu index="tickets">
                     <template #title>
                         <el-icon>
-                            <UserFilled />
+                            <List />
                         </el-icon>
                         <span>工单</span>
                     </template>
                     <el-menu-item index="/ticket/assignedtome">
                         <el-icon>
-                            <User />
+                            <Tickets />
                         </el-icon>
                         <span>待审批工单</span>
                     </el-menu-item>
                     <el-menu-item index="/ticket/icreated">
                         <el-icon>
-                            <Crop />
+                            <Tickets />
                         </el-icon>
                         <span>我创建的工单</span>
                     </el-menu-item>
                     <el-menu-item index="/ticket/iwatch">
                         <el-icon>
-                            <EditPen />
+                            <Tickets />
                         </el-icon>
                         <span>我关注的工单</span>
                     </el-menu-item>
                     <el-menu-item index="/ticket/all/assignedtome">
                         <el-icon>
-                            <EditPen />
+                            <Tickets />
                         </el-icon>
                         <span>我审批的工单</span>
                     </el-menu-item>
                     <el-menu-item index="/ticket/all">
                         <el-icon>
-                            <EditPen />
+                            <Tickets />
                         </el-icon>
                         <span>所有工单</span>
                     </el-menu-item>
@@ -97,50 +156,50 @@ import avatar from '@/assets/default.png'
                 <el-sub-menu index="manage">
                     <template #title>
                         <el-icon>
-                            <UserFilled />
+                            <Management />
                         </el-icon>
                         <span>管理</span>
                     </template>
                     <el-menu-item index="/manage/rootadminapproval">
                         <el-icon>
-                            <User />
+                            <Monitor />
                         </el-icon>
                         <span>根管理员申请</span>
                     </el-menu-item>
                     <el-menu-item index="/manage/groupadminapproval">
                         <el-icon>
-                            <Crop />
+                            <Monitor />
                         </el-icon>
                         <span>组管理员申请</span>
                     </el-menu-item>
                     <el-menu-item index="/manage/grouptransferapproval">
                         <el-icon>
-                            <EditPen />
+                            <Monitor />
                         </el-icon>
                         <span>组转让申请</span>
                     </el-menu-item>
                     <el-menu-item index="/manage/groupmemberapproval">
                         <el-icon>
-                            <EditPen />
+                            <Monitor />
                         </el-icon>
                         <span>加入组申请</span>
                     </el-menu-item>
                 </el-sub-menu>
                 <el-menu-item>
                     <el-icon>
-                        <Management />
+                        <BellFilled />
                     </el-icon>
                     <span>消息</span>
                 </el-menu-item>
                 <el-menu-item index="/user/info">
                     <el-icon>
-                        <Management />
+                        <UserFilled />
                     </el-icon>
                     <span>个人中心</span>
                 </el-menu-item>
                 <el-menu-item>
                     <el-icon>
-                        <Management />
+                        <RemoveFilled />
                     </el-icon>
                     <span>注销</span>
                 </el-menu-item>
@@ -150,19 +209,23 @@ import avatar from '@/assets/default.png'
         <el-container>
             <!-- 头部区域 -->
             <el-header>
-                <div>usnm：<strong>cmck</strong></div>
-                <el-dropdown placement="bottom-end">
+                <div style="display: flex; justify-content: flex-start;">
+                    <div>当前用户: <strong>{{ userInfoStore.info.username }}</strong></div>
+                    <el-tag type="info" style="margin-left: 30px;" effect="dark">ID: {{ userInfoStore.info.id
+                        }}</el-tag>
+                </div>
+                <el-dropdown placement="bottom-end" @command="handleCommand">
                     <span class="el-dropdown__box">
-                        <el-avatar :src="avatar" />
+                        <el-avatar :src="userInfoStore.info.avatar ? userInfoStore.info.avatar : avatar" />
                         <el-icon>
                             <CaretBottom />
                         </el-icon>
                     </span>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <el-dropdown-item command="profile" :icon="User">基本资料</el-dropdown-item>
+                            <el-dropdown-item command="info" :icon="User">基本资料</el-dropdown-item>
                             <el-dropdown-item command="avatar" :icon="Crop">更换头像</el-dropdown-item>
-                            <el-dropdown-item command="password" :icon="EditPen">重置密码</el-dropdown-item>
+                            <el-dropdown-item command="resetPassword" :icon="EditPen">重置密码</el-dropdown-item>
                             <el-dropdown-item command="logout" :icon="SwitchButton">退出登录</el-dropdown-item>
                         </el-dropdown-menu>
                     </template>

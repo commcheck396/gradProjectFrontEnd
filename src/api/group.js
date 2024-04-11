@@ -34,3 +34,30 @@ export const getCategoryMembersService = async (categoryId) => {
     }
 }
 
+export const getCategoryMembersIdService = async (categoryId) => {
+    try {
+        const responseData = await request.get(`/category/listUsersId?groupId=${categoryId}`);
+        if (responseData.data === undefined) {
+            return responseData;
+        } else {
+            return responseData.data;
+        }
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const getCategoryMembersInfoService = async (categoryId) => {
+    try {
+        const responseData = await request.get(`/category/listUsers?groupId=${categoryId}`);
+        if (responseData.data === undefined) {
+            return responseData;
+        } else {
+            return responseData.data;
+        }
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}

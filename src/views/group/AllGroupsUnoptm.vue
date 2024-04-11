@@ -4,10 +4,10 @@ import { ref, onMounted, nextTick, computed } from "vue";
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const categorys = ref([]);
-import { ElLoading, namespaceContextKey } from 'element-plus'
+import { ElLoading } from 'element-plus'
 
 import { ElMessage } from "element-plus";
-import { CircleCloseFilled, CirclePlusFilled, RemoveFilled, DeleteFilled, InfoFilled, CaretBottom, CaretTop, Flag, WarningFilled, Search, AddLocation, SemiSelect } from '@element-plus/icons-vue'
+import { CircleCloseFilled, CirclePlusFilled, RemoveFilled, DeleteFilled, InfoFilled, CaretBottom, CaretTop, Flag, WarningFilled, Search } from '@element-plus/icons-vue'
 import { getAllGroups } from "@/api/group.js";
 
 
@@ -20,8 +20,8 @@ const allGroups = async () => {
   })
   let res = await getAllGroups();
   categorys.value = res.data;
-  await getNames()
-  await IinGroups()
+  // console.log(categorys.value);
+  await getOwnerNames();
   await getAdminNames();
   await checkClickable();
   allGroupLoading.close();
@@ -59,47 +59,69 @@ const addCategory = async () => {
   cleanCategoryModel();
 };
 
-import { getNameById, getAllNames } from "@/api/user.js";
+import { getNameById } from "@/api/user.js";
 
 const getName = async (id) => {
   let res = await getNameById(id);
   return res.data;
 };
 
-let allNames = ref({})
-const getNames = async () => {
-  let idNames = await getAllNames()
-  allNames.value = idNames;
-}
+let ownerNames = ref({});
 
+const getOwnerNames = async () => {
+  for (const category of categorys.value) {
+    if (ownerNames.value[category.ownerId]) {
+      continue;
+    }
+    const name = await getName(category.ownerId);
+    ownerNames.value[category.ownerId] = name;
+  }
+};
+
+const getTicketOwnerNames = async () => {
+  for (const ticket of tickets.value) {
+    if (ownerNames.value[ticket.ownerId]) {
+      continue;
+    }
+    const name = await getName(ticket.ownerId);
+    ownerNames.value[ticket.ownerId] = name;
+  }
+};
+
+const getTicketAssigneeNames = async () => {
+  for (const ticket of tickets.value) {
+    if (ownerNames.value[ticket.assigneeId]) {
+      continue;
+    }
+    const name = await getName(ticket.ownerId);
+    ownerNames.value[ticket.assigneeId] = name;
+  }
+};
+
+// const getNames = async (users) =>{
+//   for 
+// }
 
 let adminNames = ref({});
 
-import { getAdminIdByGroupId } from "@/api/user.js";
+import { getAdminNamesByGroupId } from "@/api/user.js";
 
 const getAdminNames = async () => {
   for (const category of categorys.value) {
-    const ids = await getAdminIdByGroupId(category.id);
-    const name = ref([]);
-    for (const id of ids) {
-      name.value.push(allNames.value[id]);
-    }
+    const name = await getAdminNamesByGroupId(category.id);
     adminNames.value[category.id] = name;
   }
 };
 
 let watcherNames = ref({});
 
-import { getWatcherIdByTicketId } from "@/api/user.js";
+import { getWatcherNamesByTicketId } from "@/api/user.js";
 
 const getWatcherNames = async () => {
   for (const ticket of tickets.value) {
-    const ids = await getWatcherIdByTicketId(ticket.id);
-    const name = ref([]);
-    for (const id of ids) {
-      name.value.push(allNames.value[id]);
-    }
+    const name = await getWatcherNamesByTicketId(ticket.id);
     watcherNames.value[ticket.id] = name;
+    // console.log(name);
   }
 };
 
@@ -192,10 +214,9 @@ const clickRow = async (row) => {
       fullscreen: false,
       background: 'rgba(122, 122, 122, 0.3)',
     });
-    await IinGroups()
     currentClickRow.value.editable = await checkEditable(row.id);
     currentClickRow.value.deletable = await checkDeletable(row.id);
-    currentClickRow.value.quitable = buttonClickable.value[row.id];
+    currentClickRow.value.quitable = await inGroup(row);
     currentClickRow.value.viewable = await checkViewable(row.id);
     drawerLoading.close();
 
@@ -221,7 +242,7 @@ const clickRow = async (row) => {
     currentClickRow.value.categoryDetail = row.categoryDetail;
     currentClickRow.value.categoryId = row.id;
     await getMembers(row);
-    currentClickRow.value.categoryOwner = allNames.value[row.ownerId];
+    currentClickRow.value.categoryOwner = ownerNames.value[row.ownerId];
     console.log(currentClickRow.value.categoryOwner);
     currentClickRow.value.categoryOwnerId = row.ownerId;
     currentClickRow.value.categoryAdmin = adminNames.value[row.id];
@@ -230,9 +251,9 @@ const clickRow = async (row) => {
 
     await getTickets(row);
     currentClickRow.value.categoryTickets = tickets.value;
-    // await getTicketInfo()
-    // await getTicketOwnerNames()
-    // await getTicketAssigneeNames()
+    await getTicketInfo()
+    await getTicketOwnerNames()
+    await getTicketAssigneeNames()
     await getWatcherNames()
     // await getTicketStatus()
 
@@ -250,7 +271,7 @@ const getTicketInfo = async () => {
   }
 }
 
-import { isUserInGroup, isGroupEditable, isGroupDeletable, isGroupViewable, inGroups } from "@/api/user.js";
+import { isUserInGroup, isGroupEditable, isGroupDeletable, isGroupViewable } from "@/api/user.js";
 
 const checkEditable = async (id) => {
   const result = ref(false);
@@ -272,7 +293,6 @@ const checkViewable = async (id) => {
 
 const clickTicketRow = async (row) => {
   ElMessage.success("点")
-  console.log(currentDate);
 }
 
 
@@ -288,22 +308,11 @@ const inGroup = async (row) => {
   return result;
 }
 
-let allUserGroups = ref([])
-
-const IinGroups = async () => {
-  allUserGroups.value = await inGroups()
-  // console.log(allUserGroups.value)
-}
-
 let buttonClickable = ref({});
 
 const checkClickable = async () => {
   for (const category of categorys.value) {
-    if (allUserGroups.value.includes(category.id)) {
-      buttonClickable.value[category.id] = true;
-    } else {
-      buttonClickable.value[category.id] = false;
-    }
+    buttonClickable.value[category.id] = await inGroup(category);
   }
 }
 
@@ -326,6 +335,7 @@ const clearCurrentClickRow = () => {
     categoryAdmin: [],
     categoryMember: [],
     categoryTickets: [],
+    ticketOwnerNames: {},
     editable: false,
     deletable: false,
     quitable: false,
@@ -343,19 +353,6 @@ const filterTableData = computed(() =>
   )
 )
 
-const getCurrentTime = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
-const currentDate = getCurrentTime();
-
 </script>
 <template>
   <el-card class="page-container">
@@ -367,26 +364,27 @@ const currentDate = getCurrentTime();
             :prefix-icon="Search" placeholder="输入以查询组" />
           <el-button type="primary" @click="
             dialogVisible = true;
-          title = '添加组';">添加组</el-button>
+          title = '添加组';
+          ">添加组</el-button>
         </div>
       </div>
     </template>
-    <el-table :data="filterTableData" stripe table-layout="auto" @row-click="clickRow"
+    <el-table :data="filterTableData" stripe style="width: 100%" @row-click="clickRow"
       :default-sort="{ prop: 'id', order: 'ascending' }">
       <el-table-column fixed label="序号" width="100" prop="id" sortable> </el-table-column>
       <el-table-column label="组名称" prop="categoryName" sortable></el-table-column>
       <el-table-column label="组详情" prop="categoryDetail"></el-table-column>
-      <el-table-column label="组所有者" prop="ownerId" style="width: 200">
+      <el-table-column label="组所有者" prop="ownerId">
         <template #default="scope">
           <el-popover effect="light" trigger="hover" placement="top" width="auto">
             <template #default>
               <div>
-                拥有者名称: {{ allNames[scope.row.ownerId] }} <br />
+                拥有者名称: {{ ownerNames[scope.row.ownerId] }} <br />
                 拥有者ID: {{ scope.row.ownerId }}
               </div>
             </template>
             <template #reference>
-              <el-tag effect="light" round>{{ allNames[scope.row.ownerId] }}</el-tag>
+              <el-tag effect="light" round>{{ ownerNames[scope.row.ownerId] }}</el-tag>
             </template>
           </el-popover>
         </template>
@@ -400,11 +398,11 @@ const currentDate = getCurrentTime();
             <template #reference>
               <div v-if="adminNames[scope.row.id]">
                 <el-tag v-for="(tag, index) in adminNames[scope.row.id].slice(1, 3)" :key="index" effect="light" round
-                  type="success" style="margin-right: 4px;">
+                  type="success">
                   {{ tag }}
                 </el-tag>
                 <template v-if="adminNames[scope.row.id].length > 3">
-                  <el-tag effect="light" round type="success" style="margin-right: 4px;"> ... </el-tag>
+                  <el-tag effect="light" round type="success"> ... </el-tag>
                 </template>
               </div>
             </template>
@@ -416,20 +414,20 @@ const currentDate = getCurrentTime();
       <el-table-column label="操作" width="150">
         <template #default="{ row }">
           <el-button :icon="Edit" circle plain type="primary" @click.stop="showDialog(row)"></el-button>
-          <el-popconfirm title="你确认删除此分组吗?" confirm-button-text="Yes" cancel-button-text="No" :icon="InfoFilled"
-            icon-color="red" @confirm="deleteGroup(row)">
+          <el-popconfirm title="Are you sure to delete this?" confirm-button-text="Yes" cancel-button-text="No"
+            :icon="InfoFilled" icon-color="red" @confirm="deleteGroup(row)">
             <template #reference>
               <el-button :icon="Delete" circle plain type="danger" @click.stop></el-button>
             </template>
           </el-popconfirm>
 
-          <el-popconfirm title="确定申请加入此项目组吗?" confirm-button-text="是" cancel-button-text="否" :icon="InfoFilled"
-            icon-color="green" @confirm="requestJoiningGroup(row.id)">
+          <el-popconfirm title="Are you sure to delete this?" confirm-button-text="Yes" cancel-button-text="No"
+            :icon="InfoFilled" icon-color="green" @confirm="requestJoiningGroup(row.id)">
             <template #reference>
               <el-tooltip content="你已经在这个组中" v-if="buttonClickable[row.id]">
-                <el-button :icon="AddLocation" circle plain type="success" @click.stop disabled></el-button>
+                <el-button :icon="Delete" circle plain type="danger" @click.stop disabled></el-button>
               </el-tooltip>
-              <el-button :icon="AddLocation" circle plain type="success" @click.stop v-else></el-button>
+              <el-button :icon="Delete" circle plain type="danger" @click.stop v-else></el-button>
             </template>
           </el-popconfirm>
 
@@ -529,23 +527,23 @@ const currentDate = getCurrentTime();
                 </div>
               </template>
               <template #reference>
-                <el-tag effect="light" round style="margin-right: 4px;">{{ currentClickRow.categoryOwner }}</el-tag>
+                <el-tag effect="light" round>{{ currentClickRow.categoryOwner }}</el-tag>
               </template>
             </el-popover>
           </template>
         </el-descriptions-item>
         <el-descriptions-item label="组管理员" :span="2">
           <div v-if="currentClickRow">
-            <el-tag v-for="(tag, index) in currentClickRow.categoryAdmin" :key="index" effect="plain" round
-              type="primary" style="margin-right: 4px;">
+            <el-tag v-for="(tag, index) in currentClickRow.categoryAdmin" :key="index" effect="light" round
+              type="success">
               {{ tag }}
             </el-tag>
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="组成员">
           <div v-if="currentClickRow">
-            <el-tag v-for="(tag, index) in currentClickRow.categoryMember" :key="index" effect="light" round type="info"
-              style="margin-right: 4px;">
+            <el-tag v-for="(tag, index) in currentClickRow.categoryMember" :key="index" effect="light" round
+              type="info">
               {{ tag }}
             </el-tag>
           </div>
@@ -555,7 +553,7 @@ const currentDate = getCurrentTime();
       </el-descriptions>
       <br />
 
-      <el-card class="ticket-container">
+      <el-card style="max-height: 100%;" class="ticket-container">
         <template #header>
           <div class="card-header">
             <span>包含工单</span>
@@ -563,19 +561,19 @@ const currentDate = getCurrentTime();
         </template>
         <el-table :data="currentClickRow.categoryTickets" stripe style="width: 100%" @row-click="clickTicketRow"
           v-if="currentClickRow.viewable">
-          <el-table-column prop="id" label="ID" sortable />
+          <el-table-column prop="id" label="ID" />
           <el-table-column prop="title" label="主题" />
           <el-table-column prop="ownerId" label="创建者">
             <template #default="scope">
               <el-popover effect="light" trigger="hover" placement="top" width="auto">
                 <template #default>
                   <div>
-                    创建者名称: {{ allNames[scope.row.ownerId] }} <br />
+                    创建者名称: {{ ownerNames[scope.row.ownerId] }} <br />
                     创建者ID: {{ scope.row.ownerId }}
                   </div>
                 </template>
                 <template #reference>
-                  <el-tag effect="light" round>{{ allNames[scope.row.ownerId] }}</el-tag>
+                  <el-tag effect="light" round>{{ ownerNames[scope.row.ownerId] }}</el-tag>
                 </template>
               </el-popover>
             </template>
@@ -585,12 +583,12 @@ const currentDate = getCurrentTime();
               <el-popover effect="light" trigger="hover" placement="top" width="auto">
                 <template #default>
                   <div>
-                    审批人名称: {{ allNames[scope.row.assigneeId] }} <br />
-                    审批人ID: {{ scope.row.ownerId }}
+                    创建者名称: {{ ownerNames[scope.row.assigneeId] }} <br />
+                    创建者ID: {{ scope.row.ownerId }}
                   </div>
                 </template>
                 <template #reference>
-                  <el-tag effect="plain" round>{{ allNames[scope.row.assigneeId] }}</el-tag>
+                  <el-tag effect="warning" round>{{ ownerNames[scope.row.assigneeId] }}</el-tag>
                 </template>
               </el-popover>
             </template>
@@ -604,49 +602,42 @@ const currentDate = getCurrentTime();
                 <template #reference>
                   <div v-if="watcherNames[scope.row.id]">
                     <el-tag v-for="(tag, index) in watcherNames[scope.row.id].slice(1, 3)" :key="index" effect="light"
-                      round type="info" style="margin-right: 4px;">
+                      round type="info">
                       {{ tag }}
                     </el-tag>
                     <template v-if="watcherNames[scope.row.id].length > 3">
-                      <el-tag effect="info" round type="success" style="margin-right: 4px;"> ... </el-tag>
+                      <el-tag effect="info" round type="success"> ... </el-tag>
                     </template>
                   </div>
                 </template>
               </el-popover>
             </template>
           </el-table-column>
-          <el-table-column label="状态" prop="state" sortable>
+          <el-table-column label="状态">
             <template #default="scope">
-              <el-tag effect="danger" round v-if="scope.row.state == 1">已结束</el-tag>
-              <el-tag effect="warning" round v-else-if="currentDate > scope.row.dueTime">已逾期</el-tag>
-              <el-tag effect="success" round v-else-if="scope.row.state == 0">进行中</el-tag>
-              <!-- <el-tag effect="success" round v-if="ticketStatus[scope.row.id] == 0">进行中</el-tag>
-              <el-tag effect="danger" round v-else-if="ticketStatus[scope.row.id] == 1">已结束</el-tag> -->
+              <el-tag effect="success" round v-if="ticketStatus[scope.row.id] == 0">进行中</el-tag>
+              <el-tag effect="danger" round v-else-if="ticketStatus[scope.row.id] == 1">已结束</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="优先级" prop="priority" sortable>
+          <el-table-column label="优先级">
             <template #default="scope">
-              <el-text size="small" style="color: #FF0000;" v-if="scope.row.priority == 0"><el-icon>
+              <el-text size="small" style="color: #FF0000;" v-if="ticketPriority[scope.row.id] == 0"><el-icon>
                   <WarningFilled />
                 </el-icon>P0 紧急</el-text>
-              <el-text size="small" style="color: #FF7615;" v-else-if="scope.row.priority == 1"><el-icon>
+              <el-text size="small" style="color: #FF7615;" v-else-if="ticketPriority[scope.row.id] == 1"><el-icon>
                   <Flag />
                 </el-icon>P1 重要</el-text>
-              <el-text size="small" style="color: #FC9210;" v-else-if="scope.row.priority == 2"><el-icon>
+              <el-text size="small" style="color: #FC9210;" v-else-if="ticketPriority[scope.row.id] == 2"><el-icon>
                   <CaretTop />
                 </el-icon>P2 高</el-text>
-              <el-text size="small" style="color: #0CAEFF;" v-else-if="scope.row.priority == 3"><el-icon>
+              <el-text size="small" style="color: #0CAEFF;" v-else-if="ticketPriority[scope.row.id] == 3"><el-icon>
                   <RemoveFilled />
                 </el-icon>P3 中</el-text>
-              <el-text size="small" style="color: #5A6169;" v-else-if="scope.row.priority == 4"><el-icon>
+              <el-text size="small" style="color: #5A6169;" v-else-if="ticketPriority[scope.row.id] == 4"><el-icon>
                   <CaretBottom />
                 </el-icon>P4 低</el-text>
-              <el-text size="small" style="color: #848484;" v-else-if="scope.row.priority == 5">P5 未定级</el-text>
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" prop="createdTime" sortable></el-table-column>
-          <el-table-column label="修改时间" prop="updatedTime" sortable></el-table-column>
-          <el-table-column label="截止时间" prop="dueTime" sortable></el-table-column>
         </el-table>
         <el-empty description="加入组以查看组内工单..." v-else>
           <el-button type="primary" @click="requestJoiningGroup(currentClickRow.categoryId)">

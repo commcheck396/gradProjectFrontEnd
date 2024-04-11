@@ -35,7 +35,7 @@ const routes = [
             { path: '/ticket/manage', component: TicketManage },
             { path: '/user/info', component: UserInfo },
             { path: '/user/avatar', component: UserAvatar },
-            { path: '/user/reset/password', component: UserResetPassword },
+            { path: '/user/resetPassword', component: UserResetPassword },
             { path: '/group/all', component: AllGroups },
             { path: '/group/iadmin', component: GroupsIAdmin },
             { path: '/group/iown', component: GroupsIOwn },

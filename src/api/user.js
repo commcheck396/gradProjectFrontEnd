@@ -35,6 +35,21 @@ export const getAdminNamesByGroupId = async (groupId) => {
     }
 }
 
+export const getAdminIdByGroupId = async (groupId) => {
+    // return await request.get(`/category/listGroupAdmins?groupId=${groupId}`);
+    try {
+        const responseData = await request.get(`/category/listGroupAdminsId?groupId=${groupId}`);
+        if (responseData.data === undefined) {
+            return responseData;
+        } else {
+            return responseData.data;
+        }
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
 
 export const getWatcherNamesByTicketId = async (ticketId) => {
     try {
@@ -93,4 +108,74 @@ export const isGroupViewable = async (groupId) => {
         console.error(error);
         return null;
     }
+}
+
+export const getAllNames = async () => {
+    try {
+        const responseData = await request.get(`/user/allUserNames`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const getWatcherIdByTicketId = async (ticketId) => {
+    try {
+        const responseData = await request.get(`/ticket/getWatchersId?ticketId=${ticketId}`);
+        if (responseData.data === undefined) {
+            return responseData;
+        } else {
+            return responseData.data;
+        }
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const inGroups = async () => {
+    try {
+        const responseData = await request.get(`/user/groupsIin`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const inGroupsInfo = async () => {
+    try {
+        const responseData = await request.get(`/user/groupsInfoIin`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const userInfoService = ()=>{
+    return request.get('/user/userInfo')
+}
+
+export const updateUserInfoService = (data)=>{
+    // const params = new URLSearchParams();
+    // for(let key in data){
+    //     params.append(key, data[key]);
+    // }
+    return request.put('/user/update', data)
+}
+
+export const checkUsernameService = (username)=>{
+    return request.get(`/user/getUserByName?username=${username}`)
+}
+
+export const checkEmailService = (email)=>{
+    return request.get(`/user/getUserByEmail?email=${email}`)
+}
+
+export const UserAvatarUpdateService = (data)=>{
+    const params = new URLSearchParams();
+    params.append('avatarUrl', data);
+    return request.patch('/user/updateAvatar', params)
 }
