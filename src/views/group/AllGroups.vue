@@ -95,9 +95,12 @@ import { getWatcherIdByTicketId } from "@/api/user.js";
 const getWatcherNames = async () => {
   for (const ticket of tickets.value) {
     const ids = await getWatcherIdByTicketId(ticket.id);
+    console.log(ids);
     const name = ref([]);
-    for (const id of ids) {
-      name.value.push(allNames.value[id]);
+    if (ids) {
+      for (const id of ids) {
+        name.value.push(allNames.value[id]);
+      }
     }
     watcherNames.value[ticket.id] = name;
   }
@@ -181,23 +184,27 @@ const currentClickRow = ref({
   viewable: false,
 });
 
+const buttonLoading = ref(true)
+
 const clickRow = async (row) => {
   clearCurrentClickRow();
   drawerVisible.value = true
   nextTick(async () => {
-    const drawerTarget = document.querySelector('.drawer');
-    const drawerLoading = ElLoading.service({
-      target: drawerTarget,
-      lock: false,
-      fullscreen: false,
-      background: 'rgba(122, 122, 122, 0.3)',
-    });
+    // const drawerTarget = document.querySelector('.drawer');
+    // const drawerLoading = ElLoading.service({
+    //   target: drawerTarget,
+    //   lock: false,
+    //   fullscreen: false,
+    //   background: 'rgba(122, 122, 122, 0.3)',
+    // });
     await IinGroups()
+    buttonLoading.value = true;
     currentClickRow.value.editable = await checkEditable(row.id);
     currentClickRow.value.deletable = await checkDeletable(row.id);
     currentClickRow.value.quitable = buttonClickable.value[row.id];
     currentClickRow.value.viewable = await checkViewable(row.id);
-    drawerLoading.close();
+    buttonLoading.value = false;
+    // drawerLoading.close();
 
     const groupinfoTarget = document.querySelector('.group-info');
     const groupinfoLoading = ElLoading.service({
@@ -228,13 +235,11 @@ const clickRow = async (row) => {
     currentClickRow.value.categoryMember = members.value;
     groupinfoLoading.close();
 
-    await getTickets(row);
-    currentClickRow.value.categoryTickets = tickets.value;
-    // await getTicketInfo()
-    // await getTicketOwnerNames()
-    // await getTicketAssigneeNames()
-    await getWatcherNames()
-    // await getTicketStatus()
+    if (currentClickRow.value.viewable) {
+      await getTickets(row);
+      currentClickRow.value.categoryTickets = tickets.value;
+      await getWatcherNames()
+    }
 
     ticketLoading.close();
   });
@@ -272,7 +277,10 @@ const checkViewable = async (id) => {
 
 const clickTicketRow = async (row) => {
   ElMessage.success("点")
-  console.log(currentDate);
+  let ticketId = row.id
+  console.log(ticketId);
+  // jump to ticket detail page
+  router.push('/ticket/detail/' + ticketId)
 }
 
 
@@ -444,21 +452,24 @@ const currentDate = getCurrentTime();
       <template #header="{ close, titleId, titleClass }">
         <h4 :id="titleId" :class="titleClass">组详情</h4>
         <el-tooltip content="你已经在这个组中" v-if="buttonClickable[currentClickRow.categoryId]">
-          <el-button type="primary" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled>
+          <el-button type="primary" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled
+            :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <CirclePlusFilled />
             </el-icon>
             申请加入
           </el-button>
         </el-tooltip>
-        <el-button type="primary" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else>
+        <el-button type="primary" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else
+          :loading="buttonLoading">
           <el-icon class="el-icon--left">
             <CirclePlusFilled />
           </el-icon>
           申请加入
         </el-button>
         <el-tooltip content="你不在当前组中" v-if="!buttonClickable[currentClickRow.categoryId]">
-          <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled>
+          <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled
+            :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <RemoveFilled />
             </el-icon>
@@ -466,42 +477,46 @@ const currentDate = getCurrentTime();
           </el-button>
         </el-tooltip>
         <el-tooltip content="组所有者无法退出组" v-else-if="currentClickRow.deletable">
-          <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled>
+          <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled
+            :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <RemoveFilled />
             </el-icon>
             退出组
           </el-button>
         </el-tooltip>
-        <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else>
+        <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else
+          :loading="buttonLoading">
           <el-icon class="el-icon--left">
             <RemoveFilled />
           </el-icon>
           退出组
         </el-button>
         <el-tooltip content="你没有权限删除组" v-if="!currentClickRow.deletable">
-          <el-button type="danger" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled>
+          <el-button type="danger" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled
+            :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <DeleteFilled />
             </el-icon>
             删除组
           </el-button>
         </el-tooltip>
-        <el-button type="danger" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else>
+        <el-button type="danger" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else
+          :loading="buttonLoading">
           <el-icon class="el-icon--left">
             <DeleteFilled />
           </el-icon>
           删除组
         </el-button>
         <el-tooltip content="你没有权限编辑组信息" v-if="!currentClickRow.deletable">
-          <el-button color="#626aef" @click="showDialogDetail(currentClickRow)" disabled>
+          <el-button color="#626aef" @click="showDialogDetail(currentClickRow)" disabled :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <InfoFilled />
             </el-icon>
             编辑组
           </el-button>
         </el-tooltip>
-        <el-button color="#626aef" @click="showDialogDetail(currentClickRow)" v-else>
+        <el-button color="#626aef" @click="showDialogDetail(currentClickRow)" v-else :loading="buttonLoading">
           <el-icon class="el-icon--left">
             <InfoFilled />
           </el-icon>
@@ -586,7 +601,7 @@ const currentDate = getCurrentTime();
                 <template #default>
                   <div>
                     审批人名称: {{ allNames[scope.row.assigneeId] }} <br />
-                    审批人ID: {{ scope.row.ownerId }}
+                    审批人ID: {{ scope.row.assigneeId }}
                   </div>
                 </template>
                 <template #reference>
@@ -656,7 +671,7 @@ const currentDate = getCurrentTime();
             申请加入
           </el-button>
         </el-empty>
-        <template #footer>共包含{{ currentClickRow.categoryTickets.length }}个工单</template>
+        <template #footer>可查看{{ currentClickRow.categoryTickets.length }}个工单</template>
       </el-card>
 
     </el-drawer>

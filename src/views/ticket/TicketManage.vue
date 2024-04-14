@@ -63,6 +63,8 @@ const updateCurrentClick = async (value) => {
     ticketModel.value.assigneeId = '';
     userLoading.value = true;
     currentClickGroup.value = value;
+    userDisabled.value = true;
+    ticketDisabled.value = true;
     await getGroupUsers(currentClickGroup.value);
     await getTicketsInGroup(currentClickGroup.value);
     userDisabled.value = false;
@@ -94,10 +96,15 @@ const clearTicket = () => {
     linkedTicketsId.value = [];
     drawer.value = false;
     fileList.value = [];
+    userDisabled.value = true;
+    ticketDisabled.value = true;
+    percentage.value = 0;
     clearQuillContent();
 }
 // @ts-ignore
 const addTicket = async () => {
+    let attachmentStr = attachmentList.value.join(",");
+    ticketModel.value.attachment = attachmentStr;
     let result = await addTicketService(ticketModel.value);
     if (result.code !== 0) {
         result.value = false
@@ -125,10 +132,17 @@ const addTicket = async () => {
     }
 }
 
+const attachmentList = ref([]);
+
 const uploadSuccess = (response) => {
-    ticketModel.value.attachment = response.data;
-    ElMessage.success('上传成功');
-    console.log(ticketModel.value.attachment);
+    if (response.code === 1) {
+        ElMessage.error(response.message)
+    }
+    else {
+        attachmentList.value.push(response.data)
+        ElMessage.success('上传成功');
+    }
+    console.log(attachmentList.value);
     submitDisabled.value = false;
 }
 
@@ -201,19 +215,31 @@ const dateTimeChange = () => {
     console.log(ticketModel.value.dueTime)
 }
 
-const removeAttachment = () => {
-    ticketModel.value.attachment = '';
+const removeAttachment = (uploadFile, uploadFiles) => {
+    if (uploadFile.response) {
+        let newUploadedFileRemoved = uploadFile.response.data;
+        attachmentList.value = attachmentList.value.filter(item => item !== newUploadedFileRemoved);
+    }
+    else {
+        let fileRemoved = uploadFile.url;
+        attachmentList.value = attachmentList.value.filter(item => item !== fileRemoved);
+    }
+    console.log(uploadFile)
+    console.log(attachmentList.value);
 }
 
 const submitDisabled = ref(false)
 
 const beforeUploadAttachment = (file) => {
-    // const isLt2M = file.size / 1024 / 1024 < 20;
-    // if (!isLt2M) {
-    //     ElMessage.error('上传附件大小不能超过 20MB!');
-    // }
-    // return isLt2M;
-    submitDisabled.value = true;
+
+    const isLt2M = file.size / 1024 / 1024 < 1;
+    if (!isLt2M) {
+        ElMessage.error('上传附件大小不能超过 1MB!');
+    }
+    else {
+        submitDisabled.value = true;
+    }
+    return isLt2M;
 }
 
 const fileList = ref([]);
@@ -224,16 +250,26 @@ const defaultValue = ref('hahe');
 const myQuillEditor = ref(null);
 
 const clearQuillContent = () => {
-  if (myQuillEditor.value) {
-    console.log(myQuillEditor.value);
-    myQuillEditor.value.setText('');
-  }
-  else{
-    console.log('Noooooooooooo!');
-    myQuillEditor.value.setText('');
-    
-  }
+    if (myQuillEditor.value) {
+        console.log(myQuillEditor.value);
+        myQuillEditor.value.setText('');
+    }
+    else {
+        console.log('Noooooooooooo!');
+        myQuillEditor.value.setText('');
+
+    }
 };
+
+const colors = [
+    { color: '#f56c6c', percentage: 20 },
+    { color: '#e6a23c', percentage: 40 },
+    { color: '#5cb87a', percentage: 60 },
+    { color: '#1989fa', percentage: 80 },
+    { color: '#6f7ad3', percentage: 100 },
+]
+
+const percentage = ref(0)
 
 </script>
 
@@ -246,7 +282,9 @@ const clearQuillContent = () => {
     </el-button>
 
     <el-drawer v-model="drawer" title="新建表单" :with-header="true" size="90%" direction="btt">
-        <!-- 添加文章表单 -->
+        <!-- <div style="display: flex; justify-content: center;">
+            <el-progress :percentage="percentage" :color="colors" style="width: 40%;"></el-progress>
+        </div> -->
         <el-form :model="ticketModel" :rules="rules" label-width="100px"
             style="margin-left: 150px;margin-right: 150px; margin-top: 50px;">
             <div style="display: flex; justify-content: space-between;">
@@ -404,18 +442,17 @@ const clearQuillContent = () => {
                 </el-form-item>
             </div>
             <el-form-item label="附件上传">
-                <el-upload v-model:file-list="fileList" class="avatar-uploader" :auto-upload="true" :show-file-list="true" action="/api/upload"
-                    name="file" :headers="{ 'Authorization': tokenStore.token }" :on-success="uploadSuccess"
-                    drag="true" style="width: 35%" :on-remove="removeAttachment" :before-upload="beforeUploadAttachment" >
-                    <template #tip>
-                        <div class="el-upload__tip text-red" style="color: #FF0000">
-                            限制 1 文件，再次上传会覆盖原文件
-                        </div>
-                    </template>
+                <el-upload v-model:file-list="fileList" class="avatar-uploader" :auto-upload="true"
+                    :show-file-list="true" action="/api/upload" name="file"
+                    :headers="{ 'Authorization': tokenStore.token }" :on-success="uploadSuccess" drag="true"
+                    style="width: 35%" :before-upload="beforeUploadAttachment" :on-remove="removeAttachment">
+
                     <div v-if="ticketModel.attachment">
-                        <el-icon class="el-icon--upload"><SuccessFilled /></el-icon>
+                        <el-icon class="el-icon--upload">
+                            <SuccessFilled />
+                        </el-icon>
                         <div class="el-upload__text">
-                            重新上传
+                            继续上传
                         </div>
                     </div>
                     <div v-else>
@@ -428,8 +465,8 @@ const clearQuillContent = () => {
             </el-form-item>
             <el-form-item label="描述" prop="description">
                 <div class="editor">
-                    <quill-editor ref="myQuillEditor" theme="snow" v-model:content="ticketModel.description" :value="defaultValue" contentType="html"
-                        style="min-height: 300px;">
+                    <quill-editor ref="myQuillEditor" theme="snow" v-model:content="ticketModel.description"
+                        :value="defaultValue" contentType="html" style="min-height: 300px;">
                     </quill-editor>
                 </div>
             </el-form-item>

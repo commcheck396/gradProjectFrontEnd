@@ -26,6 +26,7 @@ import TicketTransferApproval from '@/views/manage/TicketTransferApproval.vue'
 import GroupTransferApproval from '@/views/manage/GroupTransferApproval.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import AddGroup from '@/views/manage/AddGroup.vue'
+import TicketDetail from '@/views/ticket/TicketDetail.vue'
 
 const routes = [
     { path: '/login', component: LoginVue },
@@ -54,11 +55,11 @@ const routes = [
             { path: '/manage/grouptransferapproval', component: GroupTransferApproval },
             { path: '/dashboard', component: Dashboard },
             { path: '/manage/addgroup', component: AddGroup },
+            { path: '/ticket/detail/:id', component: TicketDetail, props: true},
         ]
     },
     { path: '/welcome', component: Welcome },
     { path: '/', redirect: '/welcome' },
-    
 ]
 
 const router = createRouter({
