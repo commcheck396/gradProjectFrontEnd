@@ -179,3 +179,32 @@ export const UserAvatarUpdateService = (data)=>{
     params.append('avatarUrl', data);
     return request.patch('/user/updateAvatar', params)
 }
+
+export const sendCodeService = (email) =>{
+    return request.get(`/email/sendCode?addr=${email}`);
+}
+
+export const verifyCodeService = async (email, code) =>{
+    let result = await request.get(`/email/verifyCode?addr=${email}&code=${code}`);
+    return result.code;
+}
+
+export const forgetPasswordGetUserByNameService = async (name) =>{
+    let result = await request.get(`/email/getUserByName?name=${name}`)
+    return result
+}
+
+export const resetPasswordService = async (password, id) => {
+    let result = await request.patch(`/email/resetPassword?password=${password}&id=${id}`);
+    return result;
+}
+
+export const resetEmailService = async (email) => {
+    let result = await request.post(`/user/updateUserEmail?email=${email}`)
+    return result
+}
+
+export const isTicketEditable = async (ticketId) =>{
+    let result = await request.get(`/user/canUserEditTicket?ticketId=${ticketId}`)
+    return result.data
+}

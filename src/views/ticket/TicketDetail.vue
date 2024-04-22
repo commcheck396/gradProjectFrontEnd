@@ -3,14 +3,14 @@ import { Edit, Delete } from "@element-plus/icons-vue";
 import { ref, onMounted, nextTick, computed, watch } from "vue";
 import { useRouter } from 'vue-router'
 const router = useRouter()
-import { ElLoading, namespaceContextKey } from 'element-plus'
+import { ElLoading, namespaceContextKey, ElMessageBox } from 'element-plus'
 
 import { ElMessage } from "element-plus";
-import { CircleCloseFilled, CirclePlusFilled, RemoveFilled, DeleteFilled, InfoFilled, CaretBottom, CaretTop, Flag, WarningFilled, Search, AddLocation, SemiSelect, UploadFilled, SuccessFilled, Link } from '@element-plus/icons-vue'
+import { CircleCloseFilled, CirclePlusFilled, RemoveFilled, DeleteFilled, InfoFilled, CaretBottom, CaretTop, Flag, WarningFilled, Search, AddLocation, SemiSelect, UploadFilled, SuccessFilled, Link, ArrowDown } from '@element-plus/icons-vue'
 
 
 import { getNameById, getAllNames } from "@/api/user.js";
-import { isUserInGroup, isGroupEditable, isGroupDeletable, isGroupViewable, inGroups } from "@/api/user.js";
+import { isUserInGroup, isGroupEditable, isGroupDeletable, isGroupViewable, inGroups, isTicketEditable } from "@/api/user.js";
 
 let allNames = ref({})
 const getNames = async () => {
@@ -58,10 +58,12 @@ const getCurrentTime = () => {
 
 const currentDate = getCurrentTime();
 
-import { getCategoryTicketsService, getStatusByTicketId, getTicketById, getWatcherIdByTicketId, getLinkedTicketIdByTicketId } from "@/api/ticket.js";
+import { getCategoryTicketsService, getStatusByTicketId, getTicketById, getWatcherIdByTicketId, getLinkedTicketIdByTicketId, watchTicketService, unwatchTicketService } from "@/api/ticket.js";
 
 const currentTicketInfo = ref({});
 const ticketBelongsTo = ref(null);
+
+const isWatching = ref(false);
 
 const linkedTickets = ref([]);
 
@@ -74,14 +76,23 @@ const getTicketInfo = async () => {
     viewable.value = false;
   }
   if (viewable.value) {
+    editable.value = await isTicketEditable(currentTicketId.value)
+    editable.value = editable.value && (currentTicketInfo.value.state == 0)
     const ids = await getWatcherIdByTicketId(currentTicketId.value);
     watchersID.value = ids;
+    if (ids.includes(userInfoStore.info.id)) {
+      isWatching.value = true;
+    }
+    else {
+      isWatching.value = false;
+    }
     const linkedIds = await getLinkedTicketIdByTicketId(currentTicketId.value);
     linkedTicketsId.value = linkedIds;
     updateCurrentClick(currentTicketInfo.value.belongsTo);
   }
   ticketModel.value = currentTicketInfo.value;
   ticketModel.value.id = currentTicketId.value;
+  priorityArray.value = [];
   priorityArray.value.push(currentTicketInfo.value.priority);
   if (currentTicketInfo.value.attachment) {
     const list = currentTicketInfo.value.attachment.split(",");
@@ -97,6 +108,8 @@ const getTicketInfo = async () => {
 }
 
 const viewable = ref(false);
+const editable = ref(false);
+
 
 const requestJoiningGroup = async (id) => {
   const result = await isUserInGroup(id);
@@ -150,6 +163,9 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 import { useTokenStore } from '@/stores/token';
 const tokenStore = useTokenStore();
+
+import useUserInfoStore from '@/stores/userInfo.js'
+const userInfoStore = useUserInfoStore();
 
 import { addTicketService } from '@/api/ticket.js'
 
@@ -433,6 +449,103 @@ watch(() => router.currentRoute.value.params.id, (newId, oldId) => {
   getTicketId();
 })
 
+const watchThisTicket = async (id) => {
+  watchTicketService(id);
+  ElMessage.success("关注成功")
+  isWatching.value = true;
+  watchersID.value.push(userInfoStore.info.id)
+}
+
+const unwatchThisTicket = async (id) => {
+  unwatchTicketService(id);
+  ElMessage.success("取消关注成功")
+  isWatching.value = false;
+  watchersID.value = watchersID.value.filter((item) => item !== userInfoStore.info.id);
+}
+
+import{ approveTicketService, rejectTicketService, modifyAssigneeService } from "@/api/ticket.js"
+import{ approveTicketRequest, createTicketReminder, rejectTicketRequest } from "@/api/message.js"
+
+const approveWorkOrder = async() => {
+  await approveTicketService(currentTicketId.value)
+  await approveTicketRequest(currentTicketId.value)
+  ElMessage.success("已批准此工单")
+  await getTicketInfo()
+}
+
+const transferApproval = async() => {
+  await modifyAssigneeService(currentTicketId.value, newAssignee.value)
+  await createTicketReminder(currentTicketId.value)
+  dialogVisible.value = false;
+  ElMessage.info("审批权已转让，已提示新审批人审批此工单")
+  await getTicketInfo()
+}
+
+const rejectTicket = async(msg) =>{
+  await rejectTicketService(currentTicketId.value)
+  await rejectTicketRequest(currentTicketId.value, msg)
+  await getTicketInfo()
+}
+
+const dialogVisible = ref(false)
+
+const openApprove = () => {
+  ElMessageBox.confirm(
+    '批准此工单后工单内容将作为冻结凭证，无法再次编辑。',
+    '确认批准此工单吗？',
+    {
+      confirmButtonText: '确认',
+      cancelButtonText: '我再想想',
+      type: 'info',
+    }
+  )
+    .then(() => {
+      approveWorkOrder()
+    })
+    .catch(() => {
+    })
+}
+
+const openTransfer = () => {
+  ElMessageBox.confirm(
+    '通过并转让此工单后审批人将变更，你将失去此工单审批权限，无法批准或驳回此工单。',
+    '确认通过并转让此工单吗？',
+    {
+      confirmButtonText: '确认',
+      cancelButtonText: '我再想想',
+      type: 'info',
+    }
+  )
+    .then(() => {
+      transferApproval()
+    })
+    .catch(() => {
+    })
+}
+
+
+const openReject = () => {
+  ElMessageBox.prompt('驳回此工单后工单内容将作为冻结凭证，无法再次编辑。', '请输入驳回理由', {
+    confirmButtonText: 'OK',
+    cancelButtonText: 'Cancel',
+    type: 'warning',
+  })
+    .then(({ value }) => {
+      rejectTicket(value)
+      ElMessage({
+        type: 'success',
+        message: `已驳回此工单，理由为 ${value}`,
+      })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: 'Input canceled',
+      })
+    })
+}
+
+const newAssignee = ref('')
 
 </script>
 <template>
@@ -441,9 +554,29 @@ watch(() => router.currentRoute.value.params.id, (newId, oldId) => {
       <div class="header">
         <span>工单详情</span>
         <div class="extra">
-          <!-- <el-input v-model="search" size="large" style="text-align: right; width: 240px; margin-right: 40px;"
-            :prefix-icon="Search" placeholder="输入以查询组" /> -->
-          <el-button type="primary" @click="drawer = true;" :disabled="!viewable">修改工单</el-button>
+          <!-- <el-button type="primary" plain @click="watchThisTicket(currentTicketInfo.id)"
+            :disabled="!editable"  >审批工单</el-button> -->
+          <el-dropdown style="margin-right: 13px;">
+            <el-button type="primary" :disabled="!editable">
+              审批工单<el-icon class="el-icon--right"><arrow-down /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item :disabled="!editable" @click="openApprove">批准此工单</el-dropdown-item>
+                <el-dropdown-item :disabled="!editable" @click="dialogVisible=true">通过并转让审批</el-dropdown-item>
+                <el-dropdown-item :disabled="!editable" @click="openReject">驳回此工单</el-dropdown-item>
+                <!-- <el-dropdown-item :disabled="!editable" @click="action4">Action 4</el-dropdown-item>
+                <el-dropdown-item :disabled="!editable" @click="action5">Action 5</el-dropdown-item> -->
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-button type="success" plain @click="watchThisTicket(currentTicketInfo.id)" :disabled="isWatching"
+            v-if="!isWatching">关注工单</el-button>
+          <el-button type="danger" plain @click="unwatchThisTicket(currentTicketInfo.id)" :disabled="!isWatching"
+            v-if="isWatching">取消关注</el-button>
+          <el-button type="primary" @click="drawer = true;" :disabled="!editable">修改工单</el-button>
+
+
         </div>
       </div>
     </template>
@@ -621,8 +754,9 @@ watch(() => router.currentRoute.value.params.id, (newId, oldId) => {
           </div>
         </template>
         <el-tag effect="danger" round v-if="currentTicketInfo.state == 1">已结束</el-tag>
+        <el-tag effect="success" round v-if="currentTicketInfo.state == 2">已通过</el-tag>
         <el-tag effect="warning" round v-else-if="currentDate > currentTicketInfo.dueTime">已逾期</el-tag>
-        <el-tag effect="success" round v-else-if="currentTicketInfo.state == 0">进行中</el-tag>
+        <el-tag effect="primary" round v-else-if="currentTicketInfo.state == 0">进行中</el-tag>
       </el-descriptions-item>
 
       <el-descriptions-item span="4">
@@ -734,8 +868,9 @@ watch(() => router.currentRoute.value.params.id, (newId, oldId) => {
             <el-table-column label="状态" prop="state" sortable width="120">
               <template #default="scope">
                 <el-tag effect="danger" round v-if="scope.row.state == 1">已结束</el-tag>
+                <el-tag effect="success" round v-if="scope.row.state == 1">已通过</el-tag>
                 <el-tag effect="warning" round v-else-if="currentDate > scope.row.dueTime">已逾期</el-tag>
-                <el-tag effect="success" round v-else-if="scope.row.state == 0">进行中</el-tag>
+                <el-tag effect="primary" round v-else-if="scope.row.state == 0">进行中</el-tag>
                 <!-- <el-tag effect="success" round v-if="ticketStatus[scope.row.id] == 0">进行中</el-tag>
               <el-tag effect="danger" round v-else-if="ticketStatus[scope.row.id] == 1">已结束</el-tag> -->
               </template>
@@ -1001,6 +1136,26 @@ watch(() => router.currentRoute.value.params.id, (newId, oldId) => {
       </el-form-item>
     </el-form>
   </el-drawer>
+
+  <el-dialog v-model="dialogVisible" title="请选择审批权转让用户" width="30%">
+    <el-select placeholder="请选择" v-model="newAssignee" filterable :disabled="userDisabled">
+            <el-option v-for="c in groupUsers" :key="c.id" :label="c.username" :value="c.id">
+              <span style="float: left">{{ c.username }}</span>
+              <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px;">
+                User ID: {{ c.id }}</span>
+            </el-option>
+          </el-select>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialogVisible = false; newAssignee = ''">取消</el-button>
+        <el-button type="primary" @click="openTransfer">
+          确认
+        </el-button>
+      </span>
+    </template>
+  </el-dialog>
+
+
 </template>
 
 <style lang="scss" scoped>

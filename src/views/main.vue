@@ -160,19 +160,19 @@ const handleCommand = (command) => {
                         </el-icon>
                         <span>管理</span>
                     </template>
-                    <el-menu-item index="/manage/rootadminapproval">
+                    <el-menu-item index="/manage/myapplication">
                         <el-icon>
                             <Monitor />
                         </el-icon>
-                        <span>根管理员申请</span>
+                        <span>我的申请</span>
                     </el-menu-item>
-                    <el-menu-item index="/manage/groupadminapproval">
+                    <el-menu-item index="/manage/myapproval">
                         <el-icon>
                             <Monitor />
                         </el-icon>
-                        <span>组管理员申请</span>
+                        <span>我的审批</span>
                     </el-menu-item>
-                    <el-menu-item index="/manage/grouptransferapproval">
+                    <!-- <el-menu-item index="/manage/grouptransferapproval">
                         <el-icon>
                             <Monitor />
                         </el-icon>
@@ -183,9 +183,9 @@ const handleCommand = (command) => {
                             <Monitor />
                         </el-icon>
                         <span>加入组申请</span>
-                    </el-menu-item>
+                    </el-menu-item> -->
                 </el-sub-menu>
-                <el-menu-item>
+                <el-menu-item index="/notification">
                     <el-icon>
                         <BellFilled />
                     </el-icon>
@@ -214,22 +214,27 @@ const handleCommand = (command) => {
                     <el-tag type="info" style="margin-left: 30px;" effect="dark">ID: {{ userInfoStore.info.id
                         }}</el-tag>
                 </div>
-                <el-dropdown placement="bottom-end" @command="handleCommand">
-                    <span class="el-dropdown__box">
-                        <el-avatar :src="userInfoStore.info.avatar ? userInfoStore.info.avatar : avatar" />
-                        <el-icon>
-                            <CaretBottom />
-                        </el-icon>
-                    </span>
-                    <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item command="info" :icon="User">基本资料</el-dropdown-item>
-                            <el-dropdown-item command="avatar" :icon="Crop">更换头像</el-dropdown-item>
-                            <el-dropdown-item command="resetPassword" :icon="EditPen">重置密码</el-dropdown-item>
-                            <el-dropdown-item command="logout" :icon="SwitchButton">退出登录</el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
+                <div style="display: flex; justify-content: flex-start;">
+                    <el-badge :value="1" is-dot class="item">
+                        <el-button type="info" :icon="BellFilled" circle size="large" @click="router.push('/notification')" />
+                    </el-badge>
+                    <el-dropdown placement="bottom-end" @command="handleCommand" style="margin-left: 30px;">
+                        <span class="el-dropdown__box">
+                            <el-avatar :src="userInfoStore.info.avatar ? userInfoStore.info.avatar : avatar" />
+                            <el-icon>
+                                <CaretBottom />
+                            </el-icon>
+                        </span>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item command="info" :icon="User">个人信息</el-dropdown-item>
+                                <el-dropdown-item command="resetEmail" :icon="Crop">修改邮箱</el-dropdown-item>
+                                <el-dropdown-item command="resetPassword" :icon="EditPen">重置密码</el-dropdown-item>
+                                <el-dropdown-item command="logout" :icon="SwitchButton">注销</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                </div>
             </el-header>
             <!-- 中间区域 -->
             <el-main>
@@ -238,8 +243,8 @@ const handleCommand = (command) => {
                 </div> -->
                 <router-view></router-view>
             </el-main>
-            <!-- 底部区域 -->
-            <el-footer>footer</el-footer>
+            <!-- 底部区域
+            <el-footer>footer</el-footer> -->
         </el-container>
     </el-container>
 </template>

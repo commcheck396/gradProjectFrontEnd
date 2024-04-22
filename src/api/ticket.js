@@ -96,3 +96,69 @@ export const getLinkedTicketIdByTicketId = async (ticketId) => {
         return null;
     }
 }
+
+export const getAllTicketsService = async (pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+
+export const getAllTicketByGroupsService = async (pageNum, pageSize, belongsTo) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&belongsTo=${belongsTo}`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const getTicketIdIWatchingService = async () =>{
+    try {
+        const responseData = await request.get(`/ticket/getTicketIdIWatching`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const watchTicketService = async (ticketId) => {
+    return request.post(`/ticket/watchTicket?ticketId=${ticketId}`);
+}
+export const unwatchTicketService = async (ticketId) => {
+    return request.post(`/ticket/unwatchTicket?ticketId=${ticketId}`);
+}
+
+export const approveTicketService = async (ticketId) => {
+    return request.post(`/ticket/modifyState?ticketId=${ticketId}&state=2`)
+}
+
+export const rejectTicketService = async (ticketId) => {
+    return request.post(`/ticket/modifyState?ticketId=${ticketId}&state=1`)
+}
+
+export const modifyAssigneeService = async (ticketId, userId) => {
+    return request.post(`/ticket/modifyAssignee?ticketId=${ticketId}&assigneeId=${userId}`)
+}
+
+
+// export const getAllTicketTitle = async () => {
+//     try {
+//         const responseData = await request.get('/ticket/all');
+//         if (responseData.data === undefined) {
+//             return responseData;
+//         } else {
+//             var ticketNames = responseData.data.map(item => item.title);
+//             return ticketNames;
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         return null;
+//     }
+// }

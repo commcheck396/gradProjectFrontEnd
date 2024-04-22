@@ -61,3 +61,18 @@ export const getCategoryMembersInfoService = async (categoryId) => {
         return null;
     }
 }
+
+export const getAllGroupNames = async () => {
+    try {
+        const responseData = await request.get('/category/all');
+        if (responseData.data === undefined) {
+            return responseData;
+        } else {
+            var groupNames = responseData.data.map(item => item.categoryName);
+            return groupNames;
+        }
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}

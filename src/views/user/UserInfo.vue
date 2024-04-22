@@ -25,7 +25,7 @@ const rules = {
         }
     ],
     email: [
-        { required: true, message: '请输入用户邮箱', trigger: 'blur' },
+        { required: false, message: '请输入用户邮箱', trigger: 'blur' },
         { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
     ]
 }
@@ -84,7 +84,8 @@ const beforeUploadAvatar = (file) => {
             <div class="header">
                 <div style="display: flex; justify-content: space-between;">
                     <span>基本资料</span>
-                    <el-button type="primary" @click="updateUserInfo" :disabled="commitDisabled" size="large">提交修改</el-button>
+                    <el-button type="primary" @click="updateUserInfo" :disabled="commitDisabled"
+                        size="large">提交修改</el-button>
                 </div>
             </div>
 
@@ -98,11 +99,11 @@ const beforeUploadAvatar = (file) => {
                     <el-form-item label="用户名称" prop="username">
                         <el-tag size="large" style="margin-left: 5px;">{{ userInfo.username }}</el-tag>
                     </el-form-item>
+                    <el-form-item label="用户邮箱" prop="email">
+                        <el-tag size="large" style="margin-left: 5px;">{{ userInfo.email }}</el-tag>
+                    </el-form-item>
                     <el-form-item label="个性签名" prop="nickname">
                         <el-input v-model="userInfo.nickname" maxlength="100" show-word-limit type="textarea" />
-                    </el-form-item>
-                    <el-form-item label="用户邮箱" prop="email">
-                        <el-input v-model="userInfo.email"></el-input>
                     </el-form-item>
                 </el-form>
             </el-col>
@@ -111,13 +112,14 @@ const beforeUploadAvatar = (file) => {
                     action="/api/upload" name="file" :headers="{
                         'Authorization': tokenStore.token
                     }" :on-success="uploadSuccess" :before-upload="beforeUploadAvatar">
-                    <el-avatar v-if="commitDisabled" shape="square" :size="200" :fit="fit" :src="uploading"/>
+                    <el-avatar v-if="commitDisabled" shape="square" :size="200" :fit="fit" :src="uploading" />
                     <el-avatar v-else-if="imgUrl" shape="square" :size="200" :fit="fit" :src="imgUrl" />
                     <el-avatar v-else shape="square" :size="200" :fit="fit" :src="avatar" />
                 </el-upload>
                 <br />
                 <el-button type="success" :icon="Plus" size="small"
-                    @click="uploadRef.$el.querySelector('input').click()" :disabled="commitDisabled" style="width: 200px;">
+                    @click="uploadRef.$el.querySelector('input').click()" :disabled="commitDisabled"
+                    style="width: 200px;">
                     <div v-if="commitDisabled">头像上传中</div>
                     <div v-else>修改头像</div>
                 </el-button>

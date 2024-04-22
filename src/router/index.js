@@ -27,6 +27,11 @@ import GroupTransferApproval from '@/views/manage/GroupTransferApproval.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import AddGroup from '@/views/manage/AddGroup.vue'
 import TicketDetail from '@/views/ticket/TicketDetail.vue'
+import forgetPassword from '@/views/forgetPassword.vue'
+import ResetEmail from '@/views/user/UserEmail.vue'
+import notification from '@/views/notification.vue'
+import MyApplication from '@/views/manage/MyApplication.vue'
+import MyApproval from '@/views/manage/MyApproval.vue'
 
 const routes = [
     { path: '/login', component: LoginVue },
@@ -36,6 +41,7 @@ const routes = [
             { path: '/ticket/manage', component: TicketManage },
             { path: '/user/info', component: UserInfo },
             { path: '/user/avatar', component: UserAvatar },
+            { path: '/user/resetEmail', component: ResetEmail },
             { path: '/user/resetPassword', component: UserResetPassword },
             { path: '/group/all', component: AllGroups },
             { path: '/group/iadmin', component: GroupsIAdmin },
@@ -56,10 +62,15 @@ const routes = [
             { path: '/dashboard', component: Dashboard },
             { path: '/manage/addgroup', component: AddGroup },
             { path: '/ticket/detail/:id', component: TicketDetail, props: true},
+            { path: '/notification', component: notification },
+            { path: '/manage/myapplication', component: MyApplication },
+            { path: '/manage/myapproval', component: MyApproval },
         ]
     },
     { path: '/welcome', component: Welcome },
     { path: '/', redirect: '/welcome' },
+    { path: '/forgetPassword', component: forgetPassword },
+    
 ]
 
 const router = createRouter({
