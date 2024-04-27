@@ -147,6 +147,74 @@ export const modifyAssigneeService = async (ticketId, userId) => {
     return request.post(`/ticket/modifyAssignee?ticketId=${ticketId}&assigneeId=${userId}`)
 }
 
+export const getAllTIcketsAssignedToMeService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&assigneeId=${userId}`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+
+export const getAllTicketsCreatedByMeService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&ownerId=${userId}`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const getAllTicketsIWatchingService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&watcherId=${userId}`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+
+export const getPassedTIcketsAssignedToMeService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&assigneeId=${userId}&state=2`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+
+export const getPassedTicketsCreatedByMeService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&ownerId=${userId}&state=2`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const getPassedTicketsIWatchingService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&watcherId=${userId}&state=2`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+export const deleteTicketService = async (ticketId) => {
+    let result = await request.delete(`/ticket/deleteTicket?ticketId=${ticketId}`)
+    return result.code;
+}
+
 
 // export const getAllTicketTitle = async () => {
 //     try {

@@ -31,13 +31,6 @@ const getAllGroups = async () => {
     allGroupNames.value = await getAllGroupNames();
 }
 
-// let allTicketTitles = ref({})
-// const getTicketTitles = async () => {
-//     let idTitles = await getAllTicketTitle();
-//     allTicketTitles.value = idTitles;
-//     console.log(allTicketTitles.value);
-// }
-
 
 const getRequestList = async () => {
     const allGroupLoading = ElLoading.service({
@@ -60,8 +53,7 @@ const filterTableData = computed(() =>
     requestList.value.filter(
         (data) =>
             !search.value ||
-            data.id.toLowerCase().includes(search.value.toLowerCase()) ||
-            (data.message && data.message.toLowerCase().includes(search.value.toLowerCase()))
+            data.message.toLowerCase().includes(search.value.toLowerCase())
     )
 )
 
@@ -145,7 +137,7 @@ const clickRow = async (row) => {
             </div>
         </template>
         <el-table :data="filterTableData" stripe table-layout="auto" @row-click="clickRow"
-            :default-sort="{ prop: 'updatedTime', order: 'decending' }">
+            :default-sort="{ prop: 'updatedTime', order: 'descending' }">
             <el-table-column label="发件人" prop="sender" style="width: 200">
                 <template #default="scope">
                     <el-popover effect="light" trigger="hover" placement="top" width="auto">

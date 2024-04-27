@@ -240,7 +240,7 @@ const redirectToTicket = (id) => {
                     </div>
                     <div v-else>
                         <el-button type="primary" size="mini" @click="redirectToTicket(scope.row.target)"
-                            :disabled="scope.row.status != 0">查看工单</el-button>
+                            :disabled="scope.row.status != 0" plain>查看工单</el-button>
                     </div>
                 </template>
             </el-table-column>

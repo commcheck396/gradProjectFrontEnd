@@ -144,11 +144,11 @@ const updateCategory = async () => {
   dialogVisible.value = false;
 };
 
-const deleteGroup = async (row) => {
-  let result = await deleteCategoryService(row.id);
-  ElMessage.success("删除成功");
-  allGroups();
-};
+// const deleteGroup = async (row) => {
+//   let result = await deleteCategoryService(row.id);
+//   ElMessage.success("删除成功");
+//   allGroups();
+// };
 
 const members = ref([]);
 const tickets = ref([]);
@@ -317,12 +317,48 @@ const checkClickable = async () => {
   }
 }
 
+import { createJoinGroupRequest, createGroupAdminRequest } from "@/api/message.js";
+
 const requestJoiningGroup = async (id) => {
   const result = await isUserInGroup(id);
   if (result) {
     ElMessage.error("你已经在这个组中");
   } else {
+    await createJoinGroupRequest(id);
     ElMessage.success("申请成功");
+  }
+}
+
+const requestGroupAdmin = async (id) => {
+  await createGroupAdminRequest(id);
+  ElMessage.success("申请成功");
+}
+
+import { exitGroupService, deleteGroupService } from '@/api/group.js'
+
+const exitGroup = async (id) => {
+  let code = await exitGroupService(id);
+  if (code) {
+    ElMessage.error("退出失败")
+  }
+  else {
+    ElMessage.success("退出成功")
+  }
+}
+
+const deleteGroup = async (id) => {
+  if (tickets.value.length > 0) {
+    ElMessage.error("删除组前，须清空组中所有工单")
+  }
+  else {
+    let code = await deleteGroupService(id);
+    if (code) {
+      ElMessage.error("删除失败")
+    }
+    else {
+      ElMessage.success("删除成功")
+      window.location.reload();
+    }
   }
 }
 
@@ -512,6 +548,31 @@ const allTicketsInit = async (groupId) => {
           申请加入
         </el-button>
         <el-tooltip content="你不在当前组中" v-if="!buttonClickable[currentClickRow.categoryId]">
+          <el-button type="primary" @click="requestGroupAdmin(currentClickRow.categoryId)" disabled
+            :loading="buttonLoading">
+            <el-icon class="el-icon--left">
+              <RemoveFilled />
+            </el-icon>
+            申请管理员权限
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="你已经拥有管理员权限" v-else-if="currentClickRow.editable">
+          <el-button type="primary" @click="requestGroupAdmin(currentClickRow.categoryId)" disabled
+            :loading="buttonLoading">
+            <el-icon class="el-icon--left">
+              <RemoveFilled />
+            </el-icon>
+            申请管理员权限
+          </el-button>
+        </el-tooltip>
+        <el-button type="primary" @click="requestGroupAdmin(currentClickRow.categoryId)" v-else
+          :loading="buttonLoading">
+          <el-icon class="el-icon--left">
+            <RemoveFilled />
+          </el-icon>
+          申请管理员权限
+        </el-button>
+        <el-tooltip content="你不在当前组中" v-if="!buttonClickable[currentClickRow.categoryId]">
           <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled
             :loading="buttonLoading">
             <el-icon class="el-icon--left">
@@ -521,23 +582,21 @@ const allTicketsInit = async (groupId) => {
           </el-button>
         </el-tooltip>
         <el-tooltip content="组所有者无法退出组" v-else-if="currentClickRow.deletable">
-          <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled
-            :loading="buttonLoading">
+          <el-button type="warning" @click="exitGroup(currentClickRow.categoryId)" disabled :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <RemoveFilled />
             </el-icon>
             退出组
           </el-button>
         </el-tooltip>
-        <el-button type="warning" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else
-          :loading="buttonLoading">
+        <el-button type="warning" @click="exitGroup(currentClickRow.categoryId)" v-else :loading="buttonLoading">
           <el-icon class="el-icon--left">
             <RemoveFilled />
           </el-icon>
           退出组
         </el-button>
         <el-tooltip content="你没有权限删除组" v-if="!currentClickRow.deletable">
-          <el-button type="danger" @click="requestJoiningGroup(currentClickRow.categoryId)" disabled
+          <el-button type="danger" @click="deleteGroup(currentClickRow.categoryId)" disabled
             :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <DeleteFilled />
@@ -545,14 +604,14 @@ const allTicketsInit = async (groupId) => {
             删除组
           </el-button>
         </el-tooltip>
-        <el-button type="danger" @click="requestJoiningGroup(currentClickRow.categoryId)" v-else
+        <el-button type="danger" @click="deleteGroup(currentClickRow.categoryId)" v-else
           :loading="buttonLoading">
           <el-icon class="el-icon--left">
             <DeleteFilled />
           </el-icon>
           删除组
         </el-button>
-        <el-tooltip content="你没有权限编辑组信息" v-if="!currentClickRow.deletable">
+        <el-tooltip content="你没有权限编辑组信息" v-if="!currentClickRow.editable">
           <el-button color="#626aef" @click="showDialogDetail(currentClickRow)" disabled :loading="buttonLoading">
             <el-icon class="el-icon--left">
               <InfoFilled />

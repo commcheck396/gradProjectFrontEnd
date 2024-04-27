@@ -547,6 +547,19 @@ const openReject = () => {
 
 const newAssignee = ref('')
 
+import {deleteTicketService} from '@/api/ticket.js'
+
+const deleteTicket = async(ticketId) =>{
+  let result = await deleteTicketService(ticketId)
+  if(result == 0){
+    ElMessage.success("删除成功")
+    router.back()
+  }
+  else{
+    ElMessage.error("删除失败")
+  }
+}
+
 </script>
 <template>
   <el-card class="page-container">
@@ -575,7 +588,12 @@ const newAssignee = ref('')
           <el-button type="danger" plain @click="unwatchThisTicket(currentTicketInfo.id)" :disabled="!isWatching"
             v-if="isWatching">取消关注</el-button>
           <el-button type="primary" @click="drawer = true;" :disabled="!editable">修改工单</el-button>
-
+          <el-popconfirm title="你确认删除此工单吗?" confirm-button-text="Yes" cancel-button-text="No" :icon="InfoFilled"
+            icon-color="red" @confirm="deleteTicket(currentTicketInfo.id)">
+            <template #reference>
+              <el-button type="danger" :disabled="!editable">删除工单</el-button>
+            </template>
+          </el-popconfirm>
 
         </div>
       </div>

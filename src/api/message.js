@@ -21,6 +21,16 @@ export const rejectRequest = async (requestId, msg) => {
     return result.code
 }
 
+export const createJoinGroupRequest = async(groupId) => {
+    let result = await request.post(`/request/joinGroupRequest?groupId=${groupId}`)
+    return result.code;
+}
+
+export const createGroupAdminRequest = async(groupId) => {
+    let result = await request.post(`/request/groupAdminRequest?groupId=${groupId}`)
+    return result.code;
+}
+
 export const createTicketReminder = async (ticketId) => {
     let result = await request.post(`/request/remindTicketAssignee?ticketId=${ticketId}`)
     return result.code

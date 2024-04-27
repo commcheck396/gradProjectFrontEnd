@@ -76,3 +76,13 @@ export const getAllGroupNames = async () => {
         return null;
     }
 }
+
+export const exitGroupService = async(groupId) => {
+    let result = request.post(`/category/exitGroup?groupList=${groupId}`)
+    return result.code;
+}
+
+export const deleteGroupService = async(groupId) => {
+    let result = await request.delete(`/category?id=${groupId}`);
+    return result.code;
+}
