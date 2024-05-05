@@ -77,6 +77,69 @@ const beforeUploadAvatar = (file) => {
     return (isJPG || isPNG) && isLt2M
 }
 
+const userData = ref({ ...userInfoStore.info })
+const remainingTime = ref(0);
+const codeDisabled = ref(false)
+
+
+import { sendCodeService, verifyCodeService, generateCloneCodeService, cloneUserService } from '@/api/user.js'
+
+const handleClick = () => {
+    sendCodeService(userData.value.email);
+    codeDisabled.value = true;
+    remainingTime.value = 120;
+    const interval = setInterval(() => {
+        remainingTime.value--;
+        if (remainingTime.value <= 0) {
+            clearInterval(interval);
+            codeDisabled.value = false;
+        }
+    }, 1000);
+}
+
+
+
+const confirmGetCode = async () => {
+    let result = await verifyCodeService(userData.value.email, emailCode.value);
+    if (result === 1) {
+        ElMessage.error('验证码错误')
+    } else {
+        emailCode.value = ''
+        remainingTime.value = 0
+        getCodeDialog.value = false
+        getNewCodeDialog.value = true
+        let res = await generateCloneCodeService()
+        cloneCode.value = res
+    }
+}
+
+const getCodeDialog = ref(false)
+const getNewCodeDialog = ref(false)
+const emailCode = ref('')
+const cloneCode = ref('')
+
+const clickGetCode = () => {
+    getCodeDialog.value = true;
+    handleClick()
+}
+
+const enterCodeDialog = ref('')
+const userCode = ref('')
+
+const cloneUserWithCode = async() =>{
+    let result = cloneUserService(userCode.value)
+    if(result.code == 0){
+        ElMessage.success("复制成功")
+        userCode.value = ''
+        enterCodeDialog.value = false
+    }
+    else{
+        ElMessage.error("校验码错误或已过期")
+        userCode.value = ''
+    }
+}
+
+
 </script>
 <template>
     <el-card class="page-container">
@@ -107,7 +170,7 @@ const beforeUploadAvatar = (file) => {
                     </el-form-item>
                 </el-form>
             </el-col>
-            <el-col :span="7" style="margin-left: 130px;">
+            <el-col :span="5" style="margin-left: 130px;">
                 <el-upload ref="uploadRef" class="avatar-uploader" :show-file-list="false" :auto-upload="true"
                     action="/api/upload" name="file" :headers="{
                         'Authorization': tokenStore.token
@@ -129,4 +192,115 @@ const beforeUploadAvatar = (file) => {
             </el-col>
         </el-row>
     </el-card>
+
+    <el-card class="page-container" style="margin-top: 40px;">
+        <template #header>
+            <div class="header">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>权限复印机</span>
+                </div>
+            </div>
+
+        </template>
+        <title>权限复制机</title>
+        <h1>关于权限复制机：</h1>
+        <p>通过校验码，你可以将你的组管理员权限复制给任何一个用户。</p>
+        <p>获得专属验证码后，在其他用户的权限复制机处输入校验码，即可快捷让其复制你的管理员权限。</p>
+        <p>请注意权限及数据安全。</p>
+        <el-button type="primary" size="large" @click="clickGetCode"
+            style="margin-bottom: 20px; margin-right: 10px; margin-top: 10px">获取校验码</el-button>
+        <el-button type="success" size="large" @click="enterCodeDialog=true"
+            style="margin-bottom: 20px; margin-right: 10px; margin-top: 10px">输入校验码</el-button>
+    </el-card>
+
+    <el-dialog v-model="getCodeDialog" title="验证邮箱以继续" align-center :width="500">
+        <div style="display: flex; justify-content: space-between;">
+            <el-input :prefix-icon="Message" placeholder="请输入邮箱验证码" v-model="emailCode"></el-input>
+            <el-button type="primary" plain style="width: 30%;" :disabled="codeDisabled" @click="handleClick">
+                获取验证码{{ remainingTime > 0 ? ` (${remainingTime}s)` : '' }}
+            </el-button>
+        </div>
+        <template #footer>
+            <div class="dialog-footer">
+                <el-button @click="getCodeDialog = false">取消</el-button>
+                <el-button type="primary" @click="confirmGetCode">
+                    下一步
+                </el-button>
+            </div>
+        </template>
+    </el-dialog>
+
+    <el-dialog v-model="getNewCodeDialog" title="请妥善保管您的校验码" align-center :width="500">
+        <!-- 您的权限复制机校验码是
+        <el-tag effect="plain">{{ cloneCode }}</el-tag> -->
+        <el-popover placement="top-start" title="校验码" :width="1000" trigger="hover"
+            :content=cloneCode>
+            <template #reference>
+                <el-button class="m-2">查看校验码</el-button>
+            </template>
+        </el-popover>
+        <template #footer>
+            <div class="dialog-footer">
+                <el-button @click="getNewCodeDialog = false; cloneCode = ''">好的</el-button>
+            </div>
+        </template>
+    </el-dialog>
+
+    <el-dialog v-model="enterCodeDialog" title="输入校验码以复制权限" align-center :width="500">
+        <el-input :prefix-icon="Message" placeholder="请输入目标用户校验码" v-model="userCode"></el-input>
+        <template #footer>
+            <div class="dialog-footer">
+                <el-button @click="enterCodeDialog = false">取消</el-button>
+                <el-button @click="cloneUserWithCode">启动复制机</el-button>
+            </div>
+        </template>
+    </el-dialog>
+
 </template>
+
+<style scoped>
+:global(h2#card-usage ~ .example .example-showcase) {
+    background-color: var(--el-fill-color) !important;
+}
+
+.el-statistic {
+    --el-statistic-content-font-size: 28px;
+}
+
+.statistic-card {
+    height: 100%;
+    padding: 20px;
+    border-radius: 4px;
+    background-color: var(--el-bg-color-overlay);
+}
+
+.statistic-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+    margin-top: 16px;
+}
+
+.statistic-footer .footer-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statistic-footer .footer-item span:last-child {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+}
+
+.green {
+    color: var(--el-color-success);
+}
+
+.red {
+    color: var(--el-color-error);
+}
+</style>

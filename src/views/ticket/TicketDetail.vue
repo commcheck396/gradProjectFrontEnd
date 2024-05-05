@@ -58,7 +58,7 @@ const getCurrentTime = () => {
 
 const currentDate = getCurrentTime();
 
-import { getCategoryTicketsService, getStatusByTicketId, getTicketById, getWatcherIdByTicketId, getLinkedTicketIdByTicketId, watchTicketService, unwatchTicketService } from "@/api/ticket.js";
+import { getCategoryTicketsService, getStatusByTicketId, getTicketById, getWatcherIdByTicketId, getLinkedTicketIdByTicketId, watchTicketService, unwatchTicketService, getTicketRoute } from "@/api/ticket.js";
 
 const currentTicketInfo = ref({});
 const ticketBelongsTo = ref(null);
@@ -66,6 +66,8 @@ const ticketBelongsTo = ref(null);
 const isWatching = ref(false);
 
 const linkedTickets = ref([]);
+
+const route = ref([]);
 
 const getTicketInfo = async () => {
   currentTicketInfo.value = await getTicketById(currentTicketId.value);
@@ -89,6 +91,8 @@ const getTicketInfo = async () => {
     const linkedIds = await getLinkedTicketIdByTicketId(currentTicketId.value);
     linkedTicketsId.value = linkedIds;
     updateCurrentClick(currentTicketInfo.value.belongsTo);
+    route.value = await getTicketRoute(currentTicketId.value)
+    console.log(route.value);
   }
   ticketModel.value = currentTicketInfo.value;
   ticketModel.value.id = currentTicketId.value;
@@ -104,7 +108,7 @@ const getTicketInfo = async () => {
       });
     });
   }
-  console.log(currentTicketInfo.value.attachment);
+
 }
 
 const viewable = ref(false);
@@ -463,25 +467,26 @@ const unwatchThisTicket = async (id) => {
   watchersID.value = watchersID.value.filter((item) => item !== userInfoStore.info.id);
 }
 
-import{ approveTicketService, rejectTicketService, modifyAssigneeService } from "@/api/ticket.js"
-import{ approveTicketRequest, createTicketReminder, rejectTicketRequest } from "@/api/message.js"
+import { approveTicketService, rejectTicketService, modifyAssigneeService } from "@/api/ticket.js"
+import { approveTicketRequest, createTicketReminder, rejectTicketRequest, closeRequestService } from "@/api/message.js"
 
-const approveWorkOrder = async() => {
+const approveWorkOrder = async () => {
   await approveTicketService(currentTicketId.value)
   await approveTicketRequest(currentTicketId.value)
   ElMessage.success("已批准此工单")
   await getTicketInfo()
 }
 
-const transferApproval = async() => {
+const transferApproval = async () => {
   await modifyAssigneeService(currentTicketId.value, newAssignee.value)
+  await closeRequestService(currentTicketId.value)
   await createTicketReminder(currentTicketId.value)
   dialogVisible.value = false;
   ElMessage.info("审批权已转让，已提示新审批人审批此工单")
   await getTicketInfo()
 }
 
-const rejectTicket = async(msg) =>{
+const rejectTicket = async (msg) => {
   await rejectTicketService(currentTicketId.value)
   await rejectTicketRequest(currentTicketId.value, msg)
   await getTicketInfo()
@@ -547,18 +552,22 @@ const openReject = () => {
 
 const newAssignee = ref('')
 
-import {deleteTicketService} from '@/api/ticket.js'
+import { deleteTicketService } from '@/api/ticket.js'
 
-const deleteTicket = async(ticketId) =>{
+const deleteTicket = async (ticketId) => {
   let result = await deleteTicketService(ticketId)
-  if(result == 0){
+  if (result == 0) {
     ElMessage.success("删除成功")
     router.back()
   }
-  else{
+  else {
     ElMessage.error("删除失败")
   }
 }
+
+const visible = ref(false)
+
+const color = ref(['#909399', '#67C23A', '#F56C6C', '#0bbd87'])
 
 </script>
 <template>
@@ -567,8 +576,6 @@ const deleteTicket = async(ticketId) =>{
       <div class="header">
         <span>工单详情</span>
         <div class="extra">
-          <!-- <el-button type="primary" plain @click="watchThisTicket(currentTicketInfo.id)"
-            :disabled="!editable"  >审批工单</el-button> -->
           <el-dropdown style="margin-right: 13px;">
             <el-button type="primary" :disabled="!editable">
               审批工单<el-icon class="el-icon--right"><arrow-down /></el-icon>
@@ -576,13 +583,14 @@ const deleteTicket = async(ticketId) =>{
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item :disabled="!editable" @click="openApprove">批准此工单</el-dropdown-item>
-                <el-dropdown-item :disabled="!editable" @click="dialogVisible=true">通过并转让审批</el-dropdown-item>
+                <el-dropdown-item :disabled="!editable" @click="dialogVisible = true">通过并转让审批</el-dropdown-item>
                 <el-dropdown-item :disabled="!editable" @click="openReject">驳回此工单</el-dropdown-item>
                 <!-- <el-dropdown-item :disabled="!editable" @click="action4">Action 4</el-dropdown-item>
                 <el-dropdown-item :disabled="!editable" @click="action5">Action 5</el-dropdown-item> -->
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          <el-button type="primary" plain @click="visible = true">工单流转记录</el-button>
           <el-button type="success" plain @click="watchThisTicket(currentTicketInfo.id)" :disabled="isWatching"
             v-if="!isWatching">关注工单</el-button>
           <el-button type="danger" plain @click="unwatchThisTicket(currentTicketInfo.id)" :disabled="!isWatching"
@@ -1157,12 +1165,12 @@ const deleteTicket = async(ticketId) =>{
 
   <el-dialog v-model="dialogVisible" title="请选择审批权转让用户" width="30%">
     <el-select placeholder="请选择" v-model="newAssignee" filterable :disabled="userDisabled">
-            <el-option v-for="c in groupUsers" :key="c.id" :label="c.username" :value="c.id">
-              <span style="float: left">{{ c.username }}</span>
-              <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px;">
-                User ID: {{ c.id }}</span>
-            </el-option>
-          </el-select>
+      <el-option v-for="c in groupUsers" :key="c.id" :label="c.username" :value="c.id">
+        <span style="float: left">{{ c.username }}</span>
+        <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px;">
+          User ID: {{ c.id }}</span>
+      </el-option>
+    </el-select>
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="dialogVisible = false; newAssignee = ''">取消</el-button>
@@ -1173,6 +1181,66 @@ const deleteTicket = async(ticketId) =>{
     </template>
   </el-dialog>
 
+  <el-drawer v-model="visible" :show-close="false">
+    <template #header="{ close, titleId, titleClass }">
+      <h4 :id="titleId" :class="titleClass">工单流转记录</h4>
+      <el-button type="danger" @click="close">
+        <el-icon class="el-icon--left">
+          <CircleCloseFilled />
+        </el-icon>
+        关闭
+      </el-button>
+    </template>
+    <div>
+      <el-timeline style="max-width: 600px">
+        <el-timeline-item :key="route[0].id" :timestamp="route[0].createdTime" placement="top" :color="color[0]">
+          <el-card shadow="hover">
+            <h4>用户 {{ allNames[route[0].sender] }} 创建了工单</h4>
+            <p>工单在 {{ route[0].updatedTime }} 由 {{ allNames[route[0].sender] }} 分配给 {{ allNames[route[0].receiver] }}</p>
+          </el-card>
+        </el-timeline-item>
+        <!-- <div v-for="(item, index) in route">
+          <el-timeline-item v-if="item.status == 1 && index != route.length-1" :key="item.id" :timestamp="item.updatedTime" placement="top">
+            <el-card shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 审批通过了工单</h4>
+            <p>工单在 {{ item.updatedTime }} 由 {{ allNames[item.receiver] }} 流转给 {{ allNames[route[index+1].receiver] }}</p>
+          </el-card>
+          </el-timeline-item>
+            <el-timeline-item v-else-if="item.status == 2" :key="item.id + '-rejected'" :timestamp="item.updatedTime" placement="top">
+            <el-card shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 驳回了工单</h4>
+          </el-card>
+          </el-timeline-item>
+            <el-timeline-item v-else-if="item.status == 1" :key="item.id + '-approved'" :timestamp="item.updatedTime" placement="top">
+            <el-card shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 审批通过了工单</h4>
+          </el-card>
+          </el-timeline-item>
+            <el-timeline-item v-else-if="item.status == 0" :key="item.id + '-pending'" :timestamp="item.updatedTime" placement="top">
+            <el-card shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 正在审批工单...</h4>
+          </el-card>
+          </el-timeline-item>
+        </div> -->
+        <el-timeline-item v-for="(item, index) in route" :key="item.id"
+          :timestamp="item.updatedTime" placement="top" :color="color[item.status]">
+          <el-card v-if="item.status == 1 && index != route.length-1" shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 审批通过了工单</h4>
+            <p>工单在 {{ item.updatedTime }} 由 {{ allNames[item.receiver] }} 流转给 {{ allNames[route[index+1].receiver] }}</p>
+          </el-card>
+          <el-card v-else-if="item.status == 2" shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 驳回了工单</h4>
+          </el-card>
+          <el-card v-else-if="item.status == 1" shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 审批通过了工单</h4>
+          </el-card>
+          <el-card v-else-if="item.status == 0" shadow="hover">
+            <h4>用户 {{ allNames[item.lastEditedBy] }} 正在审批工单...</h4>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
+    </div>
+  </el-drawer>
 
 </template>
 

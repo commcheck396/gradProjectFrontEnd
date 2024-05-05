@@ -208,3 +208,13 @@ export const isTicketEditable = async (ticketId) =>{
     let result = await request.get(`/user/canUserEditTicket?ticketId=${ticketId}`)
     return result.data
 }
+
+export const generateCloneCodeService = async() =>{
+    let result = await request.get(`/user/generateUserCloneCode`)
+    return result.data;
+}
+
+export const cloneUserService = async (cloneCode) =>{
+    let result = await request.post(`/user/cloneUser?cloneCode=${cloneCode}`)
+    return result
+}

@@ -215,6 +215,11 @@ export const deleteTicketService = async (ticketId) => {
     return result.code;
 }
 
+export const getTicketRoute = async (ticketId) => {
+    let result = await request.get(`/ticket/getTicketRoute?ticketId=${ticketId}`)
+    return result.data;
+}
+
 
 // export const getAllTicketTitle = async () => {
 //     try {

@@ -43,7 +43,7 @@ instance.interceptors.response.use(
             //     window.location.href = '/login';
             // }, 3000); 
 
-            window.location.href = `/login?message=${encodeURIComponent('pls login first')}`;
+            window.location.href = `/login?message=${encodeURIComponent('请先登录')}`;
 
         }
         else{

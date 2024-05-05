@@ -50,3 +50,8 @@ export const getAllRequestOfCurrentUser = async () => {
     let result = await request.get('/request/getAllRequestOfCurrentUser')
     return result.data
 }
+
+export const closeRequestService = async (requestId) => {
+    let result = await request.post(`/request/closeRequest?ticketId=${requestId}`)
+    return result.code
+}
