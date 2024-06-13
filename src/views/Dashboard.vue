@@ -54,7 +54,7 @@ const getNames = async () => {
 
 }
 
-import { getAllTIcketsAssignedToMeService, getAllTicketsCreatedByMeService, getAllTicketsIWatchingService, getPassedTIcketsAssignedToMeService, getPassedTicketsCreatedByMeService, getPassedTicketsIWatchingService } from "@/api/ticket.js";
+import { getAllTIcketsAssignedToMeService, getAllTicketsCreatedByMeService, getAllTicketsIWatchingService, getPassedTIcketsAssignedToMeService, getPassedTicketsCreatedByMeService, getPassedTicketsIWatchingService, getRejectedTIcketsAssignedToMeService, getRejectedTicketsCreatedByMeService, getRejectedTicketsIWatchingService } from "@/api/ticket.js";
 import useUserInfoStore from '@/stores/userInfo.js'
 const userInfoStore = useUserInfoStore();
 
@@ -80,7 +80,7 @@ const getCurrentTime = () => {
 const currentDate = getCurrentTime();
 
 
-const pageSizeAllTicketsAssignedToMe = ref(15);
+const pageSizeAllTicketsAssignedToMe = ref(8);
 const currentPageAllTicketsAssignedToMe = ref(1);
 const allTicketsNumAllTicketsAssignedToMe = ref(0);
 const passedNumTicketsAssignedToMe = ref(0);
@@ -95,7 +95,8 @@ let getAllTicketAssignedToMeInit = async () => {
     background: 'rgba(122, 122, 122, 0.3)',
   });
   let passRes = await getPassedTIcketsAssignedToMeService(userInfoStore.info.id, currentPageAllTicketsAssignedToMe.value, pageSizeAllTicketsAssignedToMe.value);
-  passedNumTicketsAssignedToMe.value = passRes.total;
+  let rejectRes = await getRejectedTIcketsAssignedToMeService(userInfoStore.info.id, currentPageAllTicketsAssignedToMe.value, pageSizeAllTicketsAssignedToMe.value);
+  passedNumTicketsAssignedToMe.value = passRes.total + rejectRes.total;
   let res = await getAllTIcketsAssignedToMeService(userInfoStore.info.id, currentPageAllTicketsAssignedToMe.value, pageSizeAllTicketsAssignedToMe.value);
   allTicketsAssignedToMe.value = res.items;
   allTicketsNumAllTicketsAssignedToMe.value = res.total;
@@ -129,7 +130,7 @@ const handleCurrentChangeAllTicketsAssignedToMe = (val: number) => {
   console.log(`current page: ${val}`)
 }
 
-const pageSizeAllTicketsCreatedByMe = ref(15);
+const pageSizeAllTicketsCreatedByMe = ref(8);
 const currentPageAllTicketsCreatedByMe = ref(1);
 const allTicketsNumAllTicketsCreatedByMe = ref(0);
 const passedNumAllTicketsCreatedByMe = ref(0);
@@ -144,7 +145,8 @@ let getAllTicketsCreatedByMeInit = async () => {
     background: 'rgba(122, 122, 122, 0.3)',
   });
   let passRes = await getPassedTicketsCreatedByMeService(userInfoStore.info.id, currentPageAllTicketsCreatedByMe.value, pageSizeAllTicketsCreatedByMe.value);
-  passedNumAllTicketsCreatedByMe.value = passRes.total;
+  let rejectRes = await getRejectedTicketsCreatedByMeService(userInfoStore.info.id, currentPageAllTicketsCreatedByMe.value, pageSizeAllTicketsCreatedByMe.value);
+  passedNumAllTicketsCreatedByMe.value = passRes.total + rejectRes.total;
   let res = await getAllTicketsCreatedByMeService(userInfoStore.info.id, currentPageAllTicketsCreatedByMe.value, pageSizeAllTicketsCreatedByMe.value);
   AllTicketsCreatedByMe.value = res.items;
   allTicketsNumAllTicketsCreatedByMe.value = res.total;
@@ -179,7 +181,7 @@ const handleCurrentChangeAllTicketsCreatedByMe = (val: number) => {
 }
 
 
-const pageSizeAllTicketsIWatching = ref(15);
+const pageSizeAllTicketsIWatching = ref(8);
 const currentPageAllTicketsIWatching = ref(1);
 const allTicketsNumAllTicketsIWatching = ref(0);
 const allPassedNumAllTicketsIWatching = ref(0);
@@ -194,7 +196,8 @@ let getAllTicketsIWatchingInit = async () => {
     background: 'rgba(122, 122, 122, 0.3)',
   });
   let passRes = await getPassedTicketsIWatchingService(userInfoStore.info.id, currentPageAllTicketsIWatching.value, pageSizeAllTicketsIWatching.value);
-  allPassedNumAllTicketsIWatching.value = passRes.total;
+  let rejectRes = await getRejectedTicketsIWatchingService(userInfoStore.info.id, currentPageAllTicketsIWatching.value, pageSizeAllTicketsIWatching.value);
+  allPassedNumAllTicketsIWatching.value = passRes.total + rejectRes.total;
   let res = await getAllTicketsIWatchingService(userInfoStore.info.id, currentPageAllTicketsIWatching.value, pageSizeAllTicketsIWatching.value);
   AllTicketsIWatching.value = res.items;
   allTicketsNumAllTicketsIWatching.value = res.total;
@@ -373,7 +376,7 @@ init()
         <el-table-column label="状态" prop="state" sortable>
           <template #default="scope">
             <el-tag effect="danger" round v-if="scope.row.state == 1">已结束</el-tag>
-            <el-tag effect="success" round v-if="scope.row.state == 2">已通过</el-tag>
+            <el-tag effect="success" round v-else-if="scope.row.state == 2">已驳回</el-tag>
             <el-tag effect="warning" round v-else-if="currentDate > scope.row.dueTime">已逾期</el-tag>
             <el-tag effect="primary" round v-else-if="scope.row.state == 0">进行中</el-tag>
           </template>
@@ -443,7 +446,7 @@ init()
         <el-table-column label="状态" prop="state" sortable>
           <template #default="scope">
             <el-tag effect="danger" round v-if="scope.row.state == 1">已结束</el-tag>
-            <el-tag effect="success" round v-if="scope.row.state == 2">已通过</el-tag>
+            <el-tag effect="success" round v-else-if="scope.row.state == 2">已驳回</el-tag>
             <el-tag effect="warning" round v-else-if="currentDate > scope.row.dueTime">已逾期</el-tag>
             <el-tag effect="primary" round v-else-if="scope.row.state == 0">进行中</el-tag>
           </template>
@@ -496,24 +499,24 @@ init()
           </template>
         </el-table-column>
         <el-table-column prop="assigneeId" label="审批人">
-              <template #default="scope">
-                <el-popover effect="light" trigger="hover" placement="top" width="auto">
-                  <template #default>
-                    <div>
-                      审批人名称: {{ allNames[scope.row.assigneeId] }} <br />
-                      审批人ID: {{ scope.row.assigneeId }}
-                    </div>
-                  </template>
-                  <template #reference>
-                    <el-tag effect="plain" round>{{ allNames[scope.row.assigneeId] }}</el-tag>
-                  </template>
-                </el-popover>
+          <template #default="scope">
+            <el-popover effect="light" trigger="hover" placement="top" width="auto">
+              <template #default>
+                <div>
+                  审批人名称: {{ allNames[scope.row.assigneeId] }} <br />
+                  审批人ID: {{ scope.row.assigneeId }}
+                </div>
               </template>
-            </el-table-column>
+              <template #reference>
+                <el-tag effect="plain" round>{{ allNames[scope.row.assigneeId] }}</el-tag>
+              </template>
+            </el-popover>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" prop="state" sortable>
           <template #default="scope">
             <el-tag effect="danger" round v-if="scope.row.state == 1">已结束</el-tag>
-            <el-tag effect="success" round v-if="scope.row.state == 2">已通过</el-tag>
+            <el-tag effect="success" round v-else-if="scope.row.state == 2">已驳回</el-tag>
             <el-tag effect="warning" round v-else-if="currentDate > scope.row.dueTime">已逾期</el-tag>
             <el-tag effect="primary" round v-else-if="scope.row.state == 0">进行中</el-tag>
           </template>

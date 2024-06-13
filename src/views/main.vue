@@ -76,12 +76,12 @@ const handleCommand = (command) => {
         <!-- 左侧菜单 -->
         <el-aside width="200px">
             <div class="el-aside__logo"></div>
-            <el-menu active-text-color="#ffd04b" background-color="#232323" text-color="#fff" router>
+            <el-menu active-text-color="#ffd04b" background-color="#383737" text-color="#fff" router>
                 <el-menu-item index="/dashboard">
                     <el-icon>
                         <TrendCharts />
                     </el-icon>
-                    <span>Dashboard</span>
+                    <span>主页</span>
                 </el-menu-item>
                 <el-sub-menu index="group">
                     <template #title>
@@ -254,10 +254,10 @@ const handleCommand = (command) => {
     height: 100vh;
 
     .el-aside {
-        background-color: #232323;
+        background-color: #383737;
 
         &__logo {
-            height: 120px;
+            height: 60px;
             background: url('@/assets/logo.png') no-repeat center / 120px auto;
         }
 

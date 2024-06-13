@@ -503,13 +503,13 @@ const allTicketsInit = async (groupId) => {
       <el-table-column label="最后修改时间" prop="updatedTime" sortable></el-table-column>
       <el-table-column label="" width="150">
         <template #default="{ row }">
-          <el-button :icon="Edit" circle plain type="primary" @click.stop="showDialog(row)"></el-button>
+          <!-- <el-button :icon="Edit" circle plain type="primary" @click.stop="showDialog(row)"></el-button>
           <el-popconfirm title="你确认删除此分组吗?" confirm-button-text="Yes" cancel-button-text="No" :icon="InfoFilled"
             icon-color="red" @confirm="deleteGroup(row)">
             <template #reference>
               <el-button :icon="Delete" circle plain type="danger" @click.stop></el-button>
             </template>
-          </el-popconfirm>
+          </el-popconfirm> -->
 
           <el-popconfirm title="确定申请加入此项目组吗?" confirm-button-text="是" cancel-button-text="否" :icon="InfoFilled"
             icon-color="green" @confirm="requestJoiningGroup(row.id)">
@@ -551,7 +551,7 @@ const allTicketsInit = async (groupId) => {
           <el-button type="primary" @click="requestGroupAdmin(currentClickRow.categoryId)" disabled
             :loading="buttonLoading">
             <el-icon class="el-icon--left">
-              <RemoveFilled />
+              <CirclePlusFilled />
             </el-icon>
             申请管理员权限
           </el-button>
@@ -560,7 +560,7 @@ const allTicketsInit = async (groupId) => {
           <el-button type="primary" @click="requestGroupAdmin(currentClickRow.categoryId)" disabled
             :loading="buttonLoading">
             <el-icon class="el-icon--left">
-              <RemoveFilled />
+              <CirclePlusFilled />
             </el-icon>
             申请管理员权限
           </el-button>
@@ -568,7 +568,7 @@ const allTicketsInit = async (groupId) => {
         <el-button type="primary" @click="requestGroupAdmin(currentClickRow.categoryId)" v-else
           :loading="buttonLoading">
           <el-icon class="el-icon--left">
-            <RemoveFilled />
+            <CirclePlusFilled />
           </el-icon>
           申请管理员权限
         </el-button>

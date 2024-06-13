@@ -127,12 +127,12 @@ const redirectToTicket = (id) => {
                 <span>所有申请</span>
                 <div class="extra">
                     <el-input v-model="search" size="large" style="text-align: right; width: 240px; margin-right: 40px;"
-                        :prefix-icon="Search" placeholder="输入以查询工单" />
+                        :prefix-icon="Search" placeholder="输入以查询申请" />
                 </div>
             </div>
         </template>
         <el-table :data="filterTableData" stripe table-layout="auto" @row-click=""
-            :default-sort="{ prop: 'id', order: 'ascending' }">
+            :default-sort="{ prop: 'id', order: 'descending' }">
             <el-table-column fixed label="序号" width="80" prop="id" sortable> </el-table-column>
             <el-table-column label="申请者" prop="sender" style="width: 200">
                 <template #default="scope">

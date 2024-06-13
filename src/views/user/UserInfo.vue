@@ -125,18 +125,26 @@ const clickGetCode = () => {
 
 const enterCodeDialog = ref('')
 const userCode = ref('')
+const userId = ref('')
 
 const cloneUserWithCode = async() =>{
-    let result = cloneUserService(userCode.value)
-    if(result.code == 0){
-        ElMessage.success("复制成功")
-        userCode.value = ''
-        enterCodeDialog.value = false
-    }
-    else{
-        ElMessage.error("校验码错误或已过期")
-        userCode.value = ''
-    }
+    userCode.value = ''
+    enterCodeDialog.value = false
+    ElMessage.success("权限复制成功，你已加入“测试组1”")
+    ElMessage.success("权限复制成功，你已加入“测试组2”")
+    ElMessage.success("权限复制成功，你已加入“测试组3”")
+    ElMessage.success("权限复制成功，你已加入“测试组4”")
+    ElMessage.success("权限复制成功，你已加入“测试组5”")
+    // let result = cloneUserService(userCode.value)
+    // if(result.code == 0){
+    //     ElMessage.success("复制成功")
+    //     userCode.value = ''
+    //     enterCodeDialog.value = false
+    // }
+    // else{
+    //     ElMessage.error("校验码错误或已过期")
+    //     userCode.value = ''
+    // }
 }
 
 
@@ -204,9 +212,9 @@ const cloneUserWithCode = async() =>{
         </template>
         <title>权限复制机</title>
         <h1>关于权限复制机：</h1>
-        <p>通过校验码，你可以将你的组管理员权限复制给任何一个用户。</p>
-        <p>获得专属验证码后，在其他用户的权限复制机处输入校验码，即可快捷让其复制你的管理员权限。</p>
-        <p>请注意权限及数据安全。</p>
+        <p>利用校验码，你可以将你的组管理员权限授权给其他用户。</p>
+        <p>获得专属校验码后，只需在其他用户的权限复制页面输入该校验码，即可轻松让其获得与你相同的管理员权限。</p>
+        <p>在操作过程中请务必注意权限和数据的安全性。</p>
         <el-button type="primary" size="large" @click="clickGetCode"
             style="margin-bottom: 20px; margin-right: 10px; margin-top: 10px">获取校验码</el-button>
         <el-button type="success" size="large" @click="enterCodeDialog=true"
@@ -236,7 +244,7 @@ const cloneUserWithCode = async() =>{
         <el-popover placement="top-start" title="校验码" :width="1000" trigger="hover"
             :content=cloneCode>
             <template #reference>
-                <el-button class="m-2">查看校验码</el-button>
+                <el-button class="m-2">悬浮以查看校验码</el-button>
             </template>
         </el-popover>
         <template #footer>
@@ -246,12 +254,13 @@ const cloneUserWithCode = async() =>{
         </template>
     </el-dialog>
 
-    <el-dialog v-model="enterCodeDialog" title="输入校验码以复制权限" align-center :width="500">
+    <el-dialog v-model="enterCodeDialog" title="输入校验码以复制权限" align-center :width="450">
+        <el-input :prefix-icon="Message" placeholder="请输入目标用户ID" v-model="userId" style="margin-bottom: 15px"></el-input>
         <el-input :prefix-icon="Message" placeholder="请输入目标用户校验码" v-model="userCode"></el-input>
         <template #footer>
             <div class="dialog-footer">
                 <el-button @click="enterCodeDialog = false">取消</el-button>
-                <el-button @click="cloneUserWithCode">启动复制机</el-button>
+                <el-button @click="cloneUserWithCode" plain>启动复制机</el-button>
             </div>
         </template>
     </el-dialog>

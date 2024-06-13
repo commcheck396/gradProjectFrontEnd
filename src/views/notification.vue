@@ -129,10 +129,10 @@ const clickRow = async (row) => {
     <el-card class="page-container">
         <template #header>
             <div class="header">
-                <span>所有申请</span>
+                <span>消息</span>
                 <div class="extra">
                     <el-input v-model="search" size="large" style="text-align: right; width: 240px; margin-right: 40px;"
-                        :prefix-icon="Search" placeholder="输入以查询工单" />
+                        :prefix-icon="Search" placeholder="输入以查询消息" />
                 </div>
             </div>
         </template>

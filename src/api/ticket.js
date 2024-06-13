@@ -189,6 +189,16 @@ export const getPassedTIcketsAssignedToMeService = async (userId, pageNum, pageS
     }
 }
 
+export const getRejectedTIcketsAssignedToMeService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&assigneeId=${userId}&state=1`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
 
 export const getPassedTicketsCreatedByMeService = async (userId, pageNum, pageSize) => {
     try {
@@ -200,9 +210,39 @@ export const getPassedTicketsCreatedByMeService = async (userId, pageNum, pageSi
     }
 }
 
+export const getRejectedTicketsCreatedByMeService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&ownerId=${userId}&state=1`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
 export const getPassedTicketsIWatchingService = async (userId, pageNum, pageSize) => {
     try {
         const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&watcherId=${userId}&state=2`);
+        return responseData.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+// export const getRejectedTicketsIWatchingService = async (userId, pageNum, pageSize) => {
+//     try {
+//         const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&watcherId=${userId}&state=1`);
+//         return responseData.data;
+//     } catch (error) {
+//         console.error(error);
+//         return null;
+//     }
+// }
+
+export const getRejectedTicketsIWatchingService = async (userId, pageNum, pageSize) => {
+    try {
+        const responseData = await request.get(`/ticket?pageNum=${pageNum}&pageSize=${pageSize}&watcherId=${userId}&state=1`);
         return responseData.data;
     } catch (error) {
         console.error(error);

@@ -68,7 +68,7 @@ const routes = [
         ]
     },
     { path: '/welcome', component: Welcome },
-    { path: '/', redirect: '/welcome' },
+    { path: '/', redirect: '/dashboard' },
     { path: '/forgetPassword', component: forgetPassword },
     
 ]

@@ -443,7 +443,6 @@ const getWatcherNames = async () => {
 };
 
 const clickTicketRow = async (row) => {
-  ElMessage.success("点")
   let ticketId = row.id
   router.push('/ticket/detail/' + ticketId)
   // window.location.reload();
@@ -513,8 +512,8 @@ const openApprove = () => {
 
 const openTransfer = () => {
   ElMessageBox.confirm(
-    '通过并转让此工单后审批人将变更，你将失去此工单审批权限，无法批准或驳回此工单。',
-    '确认通过并转让此工单吗？',
+    '流转此工单后审批人将变更，你将失去此工单审批权限，无法批准或驳回此工单。',
+    '确认流转此工单吗？',
     {
       confirmButtonText: '确认',
       cancelButtonText: '我再想想',
@@ -531,8 +530,8 @@ const openTransfer = () => {
 
 const openReject = () => {
   ElMessageBox.prompt('驳回此工单后工单内容将作为冻结凭证，无法再次编辑。', '请输入驳回理由', {
-    confirmButtonText: 'OK',
-    cancelButtonText: 'Cancel',
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
     type: 'warning',
   })
     .then(({ value }) => {
@@ -577,14 +576,14 @@ const color = ref(['#909399', '#67C23A', '#F56C6C', '#0bbd87'])
         <span>工单详情</span>
         <div class="extra">
           <el-dropdown style="margin-right: 13px;">
-            <el-button type="primary" :disabled="!editable">
+            <el-button type="primary" :disabled="!editable || currentTicketInfo.assigneeId != userInfoStore.info.id">
               审批工单<el-icon class="el-icon--right"><arrow-down /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item :disabled="!editable" @click="openApprove">批准此工单</el-dropdown-item>
-                <el-dropdown-item :disabled="!editable" @click="dialogVisible = true">通过并转让审批</el-dropdown-item>
-                <el-dropdown-item :disabled="!editable" @click="openReject">驳回此工单</el-dropdown-item>
+                <el-dropdown-item :disabled="!editable || currentTicketInfo.assigneeId != userInfoStore.info.id" @click="openApprove">批准此工单</el-dropdown-item>
+                <el-dropdown-item :disabled="!editable || currentTicketInfo.assigneeId != userInfoStore.info.id" @click="dialogVisible = true">流转此工单</el-dropdown-item>
+                <el-dropdown-item :disabled="!editable || currentTicketInfo.assigneeId != userInfoStore.info.id" @click="openReject">驳回此工单</el-dropdown-item>
                 <!-- <el-dropdown-item :disabled="!editable" @click="action4">Action 4</el-dropdown-item>
                 <el-dropdown-item :disabled="!editable" @click="action5">Action 5</el-dropdown-item> -->
               </el-dropdown-menu>
@@ -779,7 +778,7 @@ const color = ref(['#909399', '#67C23A', '#F56C6C', '#0bbd87'])
             状态
           </div>
         </template>
-        <el-tag effect="danger" round v-if="currentTicketInfo.state == 1">已结束</el-tag>
+        <el-tag effect="danger" round v-if="currentTicketInfo.state == 1">已驳回</el-tag>
         <el-tag effect="success" round v-if="currentTicketInfo.state == 2">已通过</el-tag>
         <el-tag effect="warning" round v-else-if="currentDate > currentTicketInfo.dueTime">已逾期</el-tag>
         <el-tag effect="primary" round v-else-if="currentTicketInfo.state == 0">进行中</el-tag>
@@ -851,12 +850,10 @@ const color = ref(['#909399', '#67C23A', '#F56C6C', '#0bbd87'])
 
 
     <div class="demo-collapse">
-      <el-collapse accordion style="margin-top: 20px;  margin-left: 50px; margin-right: 50px;">
+      <el-collapse style="margin-top: 20px;  margin-left: 50px; margin-right: 50px;">
         <el-collapse-item name="1">
           <template #title>
-            关联表单 &nbsp; <el-icon class="header-icon">
-              <Link />
-            </el-icon>
+            关联表单
           </template>
           <el-table :data="linkedTickets" stripe style="width: 100%" @row-click="clickTicketRow">
             <el-table-column prop="id" label="ID" width="80" sortable />
@@ -893,12 +890,12 @@ const color = ref(['#909399', '#67C23A', '#F56C6C', '#0bbd87'])
             </el-table-column>
             <el-table-column label="状态" prop="state" sortable width="120">
               <template #default="scope">
-                <el-tag effect="danger" round v-if="scope.row.state == 1">已结束</el-tag>
-                <el-tag effect="success" round v-if="scope.row.state == 1">已通过</el-tag>
+                <el-tag effect="danger" round v-if="scope.row.state == 1">已驳回</el-tag>
+                <el-tag effect="success" round v-if="scope.row.state == 2">已通过</el-tag>
                 <el-tag effect="warning" round v-else-if="currentDate > scope.row.dueTime">已逾期</el-tag>
                 <el-tag effect="primary" round v-else-if="scope.row.state == 0">进行中</el-tag>
                 <!-- <el-tag effect="success" round v-if="ticketStatus[scope.row.id] == 0">进行中</el-tag>
-              <el-tag effect="danger" round v-else-if="ticketStatus[scope.row.id] == 1">已结束</el-tag> -->
+              <el-tag effect="danger" round v-else-if="ticketStatus[scope.row.id] == 1">已驳回</el-tag> -->
               </template>
             </el-table-column>
             <el-table-column label="优先级" prop="priority" sortable width="100">
@@ -1063,7 +1060,7 @@ const color = ref(['#909399', '#67C23A', '#F56C6C', '#0bbd87'])
           </el-select>
         </el-form-item>
         <el-form-item label="审批用户" style="width: 33%;" prop="assigneeId">
-          <el-select placeholder="请选择" v-model="ticketModel.assigneeId" filterable :disabled="userDisabled">
+          <el-select placeholder="请选择" v-model="ticketModel.assigneeId" filterable disabled>
             <el-option v-for="c in groupUsers" :key="c.id" :label="c.username" :value="c.id">
               <span style="float: left">{{ c.username }}</span>
               <span style="float: right; color: var(--el-text-color-secondary); font-size: 13px;">
@@ -1229,13 +1226,13 @@ const color = ref(['#909399', '#67C23A', '#F56C6C', '#0bbd87'])
             <p>工单在 {{ item.updatedTime }} 由 {{ allNames[item.receiver] }} 流转给 {{ allNames[route[index+1].receiver] }}</p>
           </el-card>
           <el-card v-else-if="item.status == 2" shadow="hover">
-            <h4>用户 {{ allNames[item.lastEditedBy] }} 驳回了工单</h4>
+            <h4>用户 {{ allNames[item.receiver] }} 驳回了工单</h4>
           </el-card>
           <el-card v-else-if="item.status == 1" shadow="hover">
-            <h4>用户 {{ allNames[item.lastEditedBy] }} 审批通过了工单</h4>
+            <h4>用户 {{ allNames[item.receiver] }} 审批通过了工单</h4>
           </el-card>
           <el-card v-else-if="item.status == 0" shadow="hover">
-            <h4>用户 {{ allNames[item.lastEditedBy] }} 正在审批工单...</h4>
+            <h4>用户 {{ allNames[item.receiver] }} 正在审批工单...</h4>
           </el-card>
         </el-timeline-item>
       </el-timeline>

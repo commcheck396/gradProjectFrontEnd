@@ -713,7 +713,7 @@ const currentDate = getCurrentTime();
             <el-table-column label="状态" prop="state" sortable>
                 <template #default="scope">
                     <el-tag effect="danger" round v-if="scope.row.state == 1">已结束</el-tag>
-                    <el-tag effect="success" round v-if="scope.row.state == 2">已通过</el-tag>
+                    <el-tag effect="success" round v-else-if="scope.row.state == 2">已驳回</el-tag>
                     <el-tag effect="warning" round v-else-if="currentDate > scope.row.dueTime">已逾期</el-tag>
                     <el-tag effect="primary" round v-else-if="scope.row.state == 0">进行中</el-tag>
                     <!-- <el-tag effect="success" round v-if="ticketStatus[scope.row.id] == 0">进行中</el-tag>
@@ -778,7 +778,23 @@ const currentDate = getCurrentTime();
                             <el-button :icon="Delete" circle plain type="danger" @click.stop></el-button>
                         </template>
         </el-popconfirm> -->
-                    <div style="display: flex; justify-content: space-between;">
+                    <div v-if="buttonClickable[row.id]">
+                        <el-popconfirm title="确定关注此工单吗?" confirm-button-text="是" cancel-button-text="否"
+                            :icon="InfoFilled" icon-color="green" @confirm="watchThisTicket(row.id)">
+                            <template #reference>
+                                <el-button :icon="AddLocation" circle plain type="success" @click.stop></el-button>
+                            </template>
+                        </el-popconfirm>
+                    </div>
+                    <div v-else>
+                        <el-popconfirm title="确定取消关注此工单吗?" confirm-button-text="是" cancel-button-text="否"
+                            :icon="InfoFilled" icon-color="red" @confirm="unwatchThisTicket(row.id)">
+                            <template #reference>
+                                <el-button :icon="AddLocation" circle plain type="danger" @click.stop></el-button>
+                            </template>
+                        </el-popconfirm>
+                    </div>
+                    <!-- <div style="display: flex; justify-content: space-between;">
                         <el-popconfirm title="确定关注此工单吗?" confirm-button-text="是" cancel-button-text="否"
                             :icon="InfoFilled" icon-color="green" @confirm="watchThisTicket(row.id)">
                             <template #reference>
@@ -801,7 +817,7 @@ const currentDate = getCurrentTime();
                                     v-else></el-button>
                             </template>
                         </el-popconfirm>
-                    </div>
+                    </div> -->
                 </template>
             </el-table-column>
             <template #empty>
